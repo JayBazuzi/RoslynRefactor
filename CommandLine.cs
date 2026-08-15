@@ -19,6 +19,7 @@ static class CommandLine
             {
                 "rename" => await RenameCommand.RunAsync(rest),
                 "extract-method" => await ExtractMethodCommand.RunAsync(rest),
+                "introduce-variable" => await IntroduceVariableCommand.RunAsync(rest),
                 "-h" or "--help" or "help" => Help(),
                 _ => Unknown(command),
             };
@@ -52,8 +53,9 @@ static class CommandLine
               RoslynRefactor <command> [options]
 
             Commands:
-              rename            Rename a symbol across a solution/project
-              extract-method    Extract selected statements into a new method
+              rename              Rename a symbol across a solution/project
+              extract-method      Extract selected statements into a new method
+              introduce-variable  Introduce a local variable for a selected expression
 
             Run 'RoslynRefactor <command> --help' for command-specific options.
             """);
