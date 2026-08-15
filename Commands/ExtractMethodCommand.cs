@@ -1,18 +1,15 @@
+using System.CommandLine;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynRefactor;
 
 sealed class ExtractMethodCommand : ICommand
 {
-    public static string Name => "extract-method";
-    public static string Description => "Extract selected statements into a new method";
-
     // Microsoft.CodeAnalysis.CodeRefactorings.ExtractMethod.ExtractMethodCodeRefactoringProvider is internal to
     // Microsoft.CodeAnalysis.Features, so it must be located and instantiated via reflection. Everything else
     // (CodeRefactoringProvider, CodeRefactoringContext, CodeAction, CodeActionOperation) is public API.
@@ -24,38 +21,34 @@ sealed class ExtractMethodCommand : ICommand
         return (CodeRefactoringProvider)Activator.CreateInstance(providerType)!;
     });
 
-    public static async Task<int> RunAsync(string[] args)
+    public static Command Build()
     {
-        string? projectPath = null;
-        string? filePath = null;
-        int? startLine = null;
-        int? startColumn = null;
-        int? endLine = null;
-        int? endColumn = null;
+        var project = new Option<string>("--project") { Required = true, Description = "Path to a .sln or .csproj file" };
+        var file = new Option<string>("--file") { Required = true, Description = "Path to the file containing the selection" };
+        var startLine = new Option<int>("--start-line") { Required = true, Description = "1-based start line of the selection" };
+        var startColumn = new Option<int>("--start-column") { Required = true, Description = "1-based start column of the selection" };
+        var endLine = new Option<int>("--end-line") { Required = true, Description = "1-based end line of the selection" };
+        var endColumn = new Option<int>("--end-column") { Required = true, Description = "1-based end column of the selection" };
 
-        for (var i = 0; i < args.Length; i++)
+        var command = new Command("extract-method", "Extract selected statements into a new method")
         {
-            switch (args[i])
-            {
-                case "--project": projectPath = args[++i]; break;
-                case "--file": filePath = args[++i]; break;
-                case "--start-line": startLine = int.Parse(args[++i]); break;
-                case "--start-column": startColumn = int.Parse(args[++i]); break;
-                case "--end-line": endLine = int.Parse(args[++i]); break;
-                case "--end-column": endColumn = int.Parse(args[++i]); break;
-                case "-h" or "--help": PrintHelp(); return 0;
-                default: Console.Error.WriteLine($"error: unknown option '{args[i]}'"); return 1;
-            }
-        }
+            project, file, startLine, startColumn, endLine, endColumn,
+        };
 
-        if (projectPath is null || filePath is null || startLine is null || startColumn is null
-            || endLine is null || endColumn is null)
-        {
-            Console.Error.WriteLine("error: --project, --file, --start-line, --start-column, --end-line, and --end-column are required");
-            PrintHelp();
-            return 1;
-        }
+        command.SetAction(async (parseResult, cancellationToken) => await RunAsync(
+            parseResult.GetValue(project)!,
+            parseResult.GetValue(file)!,
+            parseResult.GetValue(startLine),
+            parseResult.GetValue(startColumn),
+            parseResult.GetValue(endLine),
+            parseResult.GetValue(endColumn),
+            cancellationToken));
 
+        return command;
+    }
+
+    static async Task<int> RunAsync(string projectPath, string filePath, int startLine, int startColumn, int endLine, int endColumn, CancellationToken cancellationToken)
+    {
         var (workspace, solution) = await WorkspaceLoader.OpenAsync(projectPath);
         using var _ = workspace;
 
@@ -70,15 +63,15 @@ sealed class ExtractMethodCommand : ICommand
             return 1;
         }
 
-        var text = await document.GetTextAsync();
-        var span = ToSpan(text, startLine.Value, startColumn.Value, endLine.Value, endColumn.Value);
+        var text = await document.GetTextAsync(cancellationToken);
+        var span = ToSpan(text, startLine, startColumn, endLine, endColumn);
         if (span is null)
         {
             Console.Error.WriteLine($"error: selection is out of range for {fullFilePath}");
             return 1;
         }
 
-        var originalRoot = await document.GetSyntaxRootAsync();
+        var originalRoot = await document.GetSyntaxRootAsync(cancellationToken);
         var enclosingType = originalRoot?.FindToken(Math.Clamp(span.Value.Start, 0, Math.Max(0, originalRoot.FullSpan.End - 1)))
             .Parent?.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().FirstOrDefault();
         if (enclosingType is null)
@@ -90,7 +83,7 @@ sealed class ExtractMethodCommand : ICommand
         var existingMethodNames = enclosingType.Members.OfType<MethodDeclarationSyntax>().Select(m => m.Identifier.Text).ToHashSet();
 
         var actions = new List<CodeAction>();
-        var context = new CodeRefactoringContext(document, span.Value, actions.Add, CancellationToken.None);
+        var context = new CodeRefactoringContext(document, span.Value, actions.Add, cancellationToken);
         await Provider.Value.ComputeRefactoringsAsync(context);
 
         var extractMethodAction = FindByEquivalenceKey(actions, "Extract_method");
@@ -100,7 +93,7 @@ sealed class ExtractMethodCommand : ICommand
             return 1;
         }
 
-        var operations = await extractMethodAction.GetOperationsAsync(CancellationToken.None);
+        var operations = await extractMethodAction.GetOperationsAsync(cancellationToken);
         var applyOperation = operations.OfType<ApplyChangesOperation>().FirstOrDefault();
         if (applyOperation is null)
         {
@@ -110,7 +103,7 @@ sealed class ExtractMethodCommand : ICommand
 
         var newSolution = applyOperation.ChangedSolution;
         var newDocument = newSolution.GetDocument(document.Id)!;
-        var newRoot = await newDocument.GetSyntaxRootAsync();
+        var newRoot = await newDocument.GetSyntaxRootAsync(cancellationToken);
         var newEnclosingType = newRoot?.DescendantNodes().OfType<TypeDeclarationSyntax>()
             .FirstOrDefault(t => t.Identifier.Text == enclosingType.Identifier.Text);
 
@@ -123,8 +116,8 @@ sealed class ExtractMethodCommand : ICommand
             return 1;
         }
 
-        var semanticModel = await newDocument.GetSemanticModelAsync();
-        var extractedSymbol = semanticModel?.GetDeclaredSymbol(newMethods[0]);
+        var semanticModel = await newDocument.GetSemanticModelAsync(cancellationToken);
+        var extractedSymbol = semanticModel?.GetDeclaredSymbol(newMethods[0], cancellationToken);
         if (extractedSymbol is null)
         {
             Console.Error.WriteLine("error: could not resolve the symbol for the extracted method.");
@@ -179,17 +172,5 @@ sealed class ExtractMethodCommand : ICommand
         }
 
         return TextSpan.FromBounds(startPos, endPos);
-    }
-
-    static void PrintHelp()
-    {
-        Console.WriteLine("""
-            Usage: RoslynRefactor extract-method --project <sln|csproj> --file <path> --start-line <n> --start-column <n> --end-line <n> --end-column <n> [--name <newMethodName>]
-
-            Extracts the given 1-based selection into a new method using Roslyn's own
-            Extract Method refactoring, replacing the selection with a call to it. If
-            --name is given, renames the generated method to the requested name;
-            otherwise the name Roslyn generates is kept.
-            """);
     }
 }

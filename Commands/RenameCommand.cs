@@ -1,3 +1,4 @@
+using System.CommandLine;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Rename;
@@ -7,40 +8,32 @@ namespace RoslynRefactor;
 
 sealed class RenameCommand : ICommand
 {
-    public static string Name => "rename";
-    public static string Description => "Rename a symbol across a solution/project";
-
-    public static async Task<int> RunAsync(string[] args)
+    public static Command Build()
     {
-        string? projectPath = null;
-        string? filePath = null;
-        int? line = null;
-        int? column = null;
-        string? newName = null;
-        var dryRun = false;
+        var project = new Option<string>("--project") { Required = true, Description = "Path to a .sln or .csproj file" };
+        var file = new Option<string>("--file") { Required = true, Description = "Path to the file containing the symbol" };
+        var line = new Option<int>("--line") { Required = true, Description = "1-based line of the symbol" };
+        var column = new Option<int>("--column") { Required = true, Description = "1-based column of the symbol" };
+        var to = new Option<string>("--to") { Required = true, Description = "The new name for the symbol" };
 
-        for (var i = 0; i < args.Length; i++)
+        var command = new Command("rename", "Rename a symbol across a solution/project")
         {
-            switch (args[i])
-            {
-                case "--project": projectPath = args[++i]; break;
-                case "--file": filePath = args[++i]; break;
-                case "--line": line = int.Parse(args[++i]); break;
-                case "--column": column = int.Parse(args[++i]); break;
-                case "--to": newName = args[++i]; break;
-                case "--dry-run": dryRun = true; break;
-                case "-h" or "--help": PrintHelp(); return 0;
-                default: Console.Error.WriteLine($"error: unknown option '{args[i]}'"); return 1;
-            }
-        }
+            project, file, line, column, to,
+        };
 
-        if (projectPath is null || filePath is null || line is null || column is null || newName is null)
-        {
-            Console.Error.WriteLine("error: --project, --file, --line, --column, and --to are required");
-            PrintHelp();
-            return 1;
-        }
+        command.SetAction(async (parseResult, cancellationToken) => await RunAsync(
+            parseResult.GetValue(project)!,
+            parseResult.GetValue(file)!,
+            parseResult.GetValue(line),
+            parseResult.GetValue(column),
+            parseResult.GetValue(to)!,
+            cancellationToken));
 
+        return command;
+    }
+
+    static async Task<int> RunAsync(string projectPath, string filePath, int line, int column, string newName, CancellationToken cancellationToken)
+    {
         var (workspace, solution) = await WorkspaceLoader.OpenAsync(projectPath);
         using var _ = workspace;
 
@@ -55,9 +48,9 @@ sealed class RenameCommand : ICommand
             return 1;
         }
 
-        var text = await document.GetTextAsync();
+        var text = await document.GetTextAsync(cancellationToken);
         // Convert 1-based line/column to an absolute position.
-        var linePosition = new LinePosition(line.Value - 1, column.Value - 1);
+        var linePosition = new LinePosition(line - 1, column - 1);
         if (linePosition.Line < 0 || linePosition.Line >= text.Lines.Count)
         {
             Console.Error.WriteLine($"error: line {line} is out of range for {fullFilePath}");
@@ -65,10 +58,10 @@ sealed class RenameCommand : ICommand
         }
         var position = text.Lines[linePosition.Line].Start + linePosition.Character;
 
-        var semanticModel = await document.GetSemanticModelAsync()
+        var semanticModel = await document.GetSemanticModelAsync(cancellationToken)
             ?? throw new InvalidOperationException("Could not obtain a semantic model for the document.");
 
-        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(semanticModel, position, solution.Workspace);
+        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(semanticModel, position, solution.Workspace, cancellationToken: cancellationToken);
         if (symbol is null)
         {
             Console.Error.WriteLine($"error: no symbol found at {fullFilePath}:{line}:{column}");
@@ -78,7 +71,7 @@ sealed class RenameCommand : ICommand
         Console.WriteLine($"Renaming '{symbol.Name}' ({symbol.Kind}) -> '{newName}'");
 
         var options = new SymbolRenameOptions();
-        var newSolution = await Renamer.RenameSymbolAsync(solution, symbol, options, newName);
+        var newSolution = await Renamer.RenameSymbolAsync(solution, symbol, options, newName, cancellationToken);
 
         var changes = newSolution.GetChanges(solution);
         var changedDocuments = changes.GetProjectChanges()
@@ -94,14 +87,9 @@ sealed class RenameCommand : ICommand
         foreach (var docId in changedDocuments)
         {
             var doc = newSolution.GetDocument(docId)!;
-            Console.WriteLine(dryRun ? $"would update: {doc.FilePath}" : $"updating: {doc.FilePath}");
+            Console.WriteLine($"updating: {doc.FilePath}");
         }
 
-        if (dryRun)
-        {
-            Console.WriteLine($"{changedDocuments.Count} file(s) would change. (dry run, nothing written)");
-            return 0;
-        }
 
         if (!workspace.TryApplyChanges(newSolution))
         {
@@ -111,14 +99,5 @@ sealed class RenameCommand : ICommand
 
         Console.WriteLine($"{changedDocuments.Count} file(s) updated.");
         return 0;
-    }
-
-    static void PrintHelp()
-    {
-        Console.WriteLine("""
-            Usage: RoslynRefactor rename --project <sln|csproj> --file <path> --line <n> --column <n> --to <newName> [--dry-run]
-
-            Renames the symbol at the given 1-based file position across the whole solution/project.
-            """);
     }
 }

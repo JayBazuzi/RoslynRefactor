@@ -1,3 +1,4 @@
+using System.CommandLine;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
@@ -10,9 +11,6 @@ namespace RoslynRefactor;
 
 sealed class IntroduceVariableCommand : ICommand
 {
-    public static string Name => "introduce-variable";
-    public static string Description => "Introduce a local variable for a selected expression";
-
     // Microsoft.CodeAnalysis.IntroduceVariable.IntroduceVariableCodeRefactoringProvider is internal to
     // Microsoft.CodeAnalysis.Features, so it must be located and instantiated via reflection. Everything else
     // (CodeRefactoringProvider, CodeRefactoringContext, CodeAction, CodeActionOperation) is public API.
@@ -26,50 +24,41 @@ sealed class IntroduceVariableCommand : ICommand
 
     static readonly string[] ValidKinds = ["local", "local-constant", "constant", "field", "query-variable"];
 
-    public static async Task<int> RunAsync(string[] args)
+    public static Command Build()
     {
-        string? projectPath = null;
-        string? filePath = null;
-        int? startLine = null;
-        int? startColumn = null;
-        int? endLine = null;
-        int? endColumn = null;
-        var kind = "local";
-        var allOccurrences = false;
-        string? newName = null;
+        var project = new Option<string>("--project") { Required = true, Description = "Path to a .sln or .csproj file" };
+        var file = new Option<string>("--file") { Required = true, Description = "Path to the file containing the selection" };
+        var startLine = new Option<int>("--start-line") { Required = true, Description = "1-based start line of the selection" };
+        var startColumn = new Option<int>("--start-column") { Required = true, Description = "1-based start column of the selection" };
+        var endLine = new Option<int>("--end-line") { Required = true, Description = "1-based end line of the selection" };
+        var endColumn = new Option<int>("--end-column") { Required = true, Description = "1-based end column of the selection" };
+        var kind = new Option<string>("--kind") { DefaultValueFactory = _ => "local", Description = "Kind of variable to introduce" };
+        kind.AcceptOnlyFromAmong(ValidKinds);
+        var allOccurrences = new Option<bool>("--all-occurrences") { Description = "Replace every matching occurrence in scope, not just the selected one" };
+        var name = new Option<string>("--name") { Description = "Rename the generated variable to this name" };
 
-        for (var i = 0; i < args.Length; i++)
+        var command = new Command("introduce-variable", "Introduce a local variable for a selected expression")
         {
-            switch (args[i])
-            {
-                case "--project": projectPath = args[++i]; break;
-                case "--file": filePath = args[++i]; break;
-                case "--start-line": startLine = int.Parse(args[++i]); break;
-                case "--start-column": startColumn = int.Parse(args[++i]); break;
-                case "--end-line": endLine = int.Parse(args[++i]); break;
-                case "--end-column": endColumn = int.Parse(args[++i]); break;
-                case "--kind": kind = args[++i]; break;
-                case "--all-occurrences": allOccurrences = true; break;
-                case "--name": newName = args[++i]; break;
-                case "-h" or "--help": PrintHelp(); return 0;
-                default: Console.Error.WriteLine($"error: unknown option '{args[i]}'"); return 1;
-            }
-        }
+            project, file, startLine, startColumn, endLine, endColumn, kind, allOccurrences, name,
+        };
 
-        if (projectPath is null || filePath is null || startLine is null || startColumn is null
-            || endLine is null || endColumn is null)
-        {
-            Console.Error.WriteLine("error: --project, --file, --start-line, --start-column, --end-line, and --end-column are required");
-            PrintHelp();
-            return 1;
-        }
+        command.SetAction(async (parseResult, cancellationToken) => await RunAsync(
+            parseResult.GetValue(project)!,
+            parseResult.GetValue(file)!,
+            parseResult.GetValue(startLine),
+            parseResult.GetValue(startColumn),
+            parseResult.GetValue(endLine),
+            parseResult.GetValue(endColumn),
+            parseResult.GetValue(kind)!,
+            parseResult.GetValue(allOccurrences),
+            parseResult.GetValue(name),
+            cancellationToken));
 
-        if (!ValidKinds.Contains(kind))
-        {
-            Console.Error.WriteLine($"error: --kind must be one of: {string.Join(", ", ValidKinds)}");
-            return 1;
-        }
+        return command;
+    }
 
+    static async Task<int> RunAsync(string projectPath, string filePath, int startLine, int startColumn, int endLine, int endColumn, string kind, bool allOccurrences, string? newName, CancellationToken cancellationToken)
+    {
         var (workspace, solution) = await WorkspaceLoader.OpenAsync(projectPath);
         using var _ = workspace;
 
@@ -84,20 +73,20 @@ sealed class IntroduceVariableCommand : ICommand
             return 1;
         }
 
-        var text = await document.GetTextAsync();
-        var span = ToSpan(text, startLine.Value, startColumn.Value, endLine.Value, endColumn.Value);
+        var text = await document.GetTextAsync(cancellationToken);
+        var span = ToSpan(text, startLine, startColumn, endLine, endColumn);
         if (span is null)
         {
             Console.Error.WriteLine($"error: selection is out of range for {fullFilePath}");
             return 1;
         }
 
-        var originalRoot = await document.GetSyntaxRootAsync();
+        var originalRoot = await document.GetSyntaxRootAsync(cancellationToken);
         var existingVariableNames = originalRoot?.DescendantNodes().OfType<VariableDeclaratorSyntax>()
             .Select(v => v.Identifier.Text).ToHashSet() ?? [];
 
         var actions = new List<CodeAction>();
-        var context = new CodeRefactoringContext(document, span.Value, actions.Add, CancellationToken.None);
+        var context = new CodeRefactoringContext(document, span.Value, actions.Add, cancellationToken);
         await Provider.Value.ComputeRefactoringsAsync(context);
 
         var leaves = new List<CodeAction>();
@@ -116,7 +105,7 @@ sealed class IntroduceVariableCommand : ICommand
         }
 
         var introduceAction = candidates[0];
-        var operations = await introduceAction.GetOperationsAsync(CancellationToken.None);
+        var operations = await introduceAction.GetOperationsAsync(cancellationToken);
         var applyOperation = operations.OfType<ApplyChangesOperation>().FirstOrDefault();
         if (applyOperation is null)
         {
@@ -126,7 +115,7 @@ sealed class IntroduceVariableCommand : ICommand
 
         var newSolution = applyOperation.ChangedSolution;
         var newDocument = newSolution.GetDocument(document.Id)!;
-        var newRoot = await newDocument.GetSyntaxRootAsync();
+        var newRoot = await newDocument.GetSyntaxRootAsync(cancellationToken);
 
         var newDeclarators = newRoot?.DescendantNodes().OfType<VariableDeclaratorSyntax>()
             .Where(v => !existingVariableNames.Contains(v.Identifier.Text))
@@ -137,8 +126,8 @@ sealed class IntroduceVariableCommand : ICommand
             return 1;
         }
 
-        var semanticModel = await newDocument.GetSemanticModelAsync();
-        var introducedSymbol = semanticModel?.GetDeclaredSymbol(newDeclarators[0]);
+        var semanticModel = await newDocument.GetSemanticModelAsync(cancellationToken);
+        var introducedSymbol = semanticModel?.GetDeclaredSymbol(newDeclarators[0], cancellationToken);
         if (introducedSymbol is null)
         {
             Console.Error.WriteLine("error: could not resolve the symbol for the introduced variable.");
@@ -148,7 +137,7 @@ sealed class IntroduceVariableCommand : ICommand
         if (newName is not null && newName != introducedSymbol.Name)
         {
             var renameOptions = new SymbolRenameOptions();
-            newSolution = await Renamer.RenameSymbolAsync(newSolution, introducedSymbol, renameOptions, newName);
+            newSolution = await Renamer.RenameSymbolAsync(newSolution, introducedSymbol, renameOptions, newName, cancellationToken);
             Console.WriteLine($"Introducing '{introducedSymbol.Name}' ({fullFilePath}), renamed to '{newName}'");
         }
         else
@@ -226,21 +215,5 @@ sealed class IntroduceVariableCommand : ICommand
         }
 
         return TextSpan.FromBounds(startPos, endPos);
-    }
-
-    static void PrintHelp()
-    {
-        Console.WriteLine("""
-            Usage: RoslynRefactor introduce-variable --project <sln|csproj> --file <path> --start-line <n> --start-column <n> --end-line <n> --end-column <n> [--kind local|local-constant|constant|field|query-variable] [--all-occurrences] [--name <newVariableName>]
-
-            Introduces a new variable for the expression covered by the given 1-based
-            selection using Roslyn's own Introduce Variable refactoring, replacing the
-            expression (and any other matched occurrences) with a reference to it.
-
-            --kind defaults to "local". --all-occurrences replaces every matching
-            occurrence in scope, not just the selected one. If --name is given, renames
-            the generated variable to the requested name; otherwise the name Roslyn
-            generates is kept.
-            """);
     }
 }
