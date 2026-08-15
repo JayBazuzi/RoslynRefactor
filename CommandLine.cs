@@ -2,6 +2,17 @@ namespace RoslynRefactor;
 
 static class CommandLine
 {
+    record CommandInfo(string Name, string Description, Func<string[], Task<int>> RunAsync);
+
+    static readonly IReadOnlyList<CommandInfo> Commands =
+    [
+        Describe<RenameCommand>(),
+        Describe<ExtractMethodCommand>(),
+        Describe<IntroduceVariableCommand>(),
+    ];
+
+    static CommandInfo Describe<T>() where T : ICommand => new(T.Name, T.Description, T.RunAsync);
+
     public static async Task<int> RunAsync(string[] args)
     {
         if (args.Length == 0)
@@ -10,19 +21,26 @@ static class CommandLine
             return 1;
         }
 
-        var command = args[0];
+        var commandName = args[0];
         var rest = args[1..];
+
+        if (commandName is "-h" or "--help" or "help")
+        {
+            PrintUsage();
+            return 0;
+        }
+
+        var command = Commands.FirstOrDefault(c => c.Name == commandName);
+        if (command is null)
+        {
+            Console.Error.WriteLine($"error: unknown command '{commandName}'");
+            PrintUsage();
+            return 1;
+        }
 
         try
         {
-            return command switch
-            {
-                "rename" => await RenameCommand.RunAsync(rest),
-                "extract-method" => await ExtractMethodCommand.RunAsync(rest),
-                "introduce-variable" => await IntroduceVariableCommand.RunAsync(rest),
-                "-h" or "--help" or "help" => Help(),
-                _ => Unknown(command),
-            };
+            return await command.RunAsync(rest);
         }
         catch (Exception ex)
         {
@@ -31,21 +49,10 @@ static class CommandLine
         }
     }
 
-    static int Help()
-    {
-        PrintUsage();
-        return 0;
-    }
-
-    static int Unknown(string command)
-    {
-        Console.Error.WriteLine($"error: unknown command '{command}'");
-        PrintUsage();
-        return 1;
-    }
-
     static void PrintUsage()
     {
+        var width = Commands.Count == 0 ? 0 : Commands.Max(c => c.Name.Length);
+
         Console.WriteLine("""
             RoslynRefactor - Roslyn-powered C# refactoring CLI
 
@@ -53,11 +60,14 @@ static class CommandLine
               RoslynRefactor <command> [options]
 
             Commands:
-              rename              Rename a symbol across a solution/project
-              extract-method      Extract selected statements into a new method
-              introduce-variable  Introduce a local variable for a selected expression
-
-            Run 'RoslynRefactor <command> --help' for command-specific options.
             """);
+
+        foreach (var command in Commands)
+        {
+            Console.WriteLine($"  {command.Name.PadRight(width)}  {command.Description}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("Run 'RoslynRefactor <command> --help' for command-specific options.");
     }
 }

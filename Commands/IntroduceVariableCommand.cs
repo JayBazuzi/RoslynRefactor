@@ -8,8 +8,11 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynRefactor;
 
-static class IntroduceVariableCommand
+sealed class IntroduceVariableCommand : ICommand
 {
+    public static string Name => "introduce-variable";
+    public static string Description => "Introduce a local variable for a selected expression";
+
     // Microsoft.CodeAnalysis.IntroduceVariable.IntroduceVariableCodeRefactoringProvider is internal to
     // Microsoft.CodeAnalysis.Features, so it must be located and instantiated via reflection. Everything else
     // (CodeRefactoringProvider, CodeRefactoringContext, CodeAction, CodeActionOperation) is public API.

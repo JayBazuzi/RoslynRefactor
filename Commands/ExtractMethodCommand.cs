@@ -8,8 +8,11 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynRefactor;
 
-static class ExtractMethodCommand
+sealed class ExtractMethodCommand : ICommand
 {
+    public static string Name => "extract-method";
+    public static string Description => "Extract selected statements into a new method";
+
     // Microsoft.CodeAnalysis.CodeRefactorings.ExtractMethod.ExtractMethodCodeRefactoringProvider is internal to
     // Microsoft.CodeAnalysis.Features, so it must be located and instantiated via reflection. Everything else
     // (CodeRefactoringProvider, CodeRefactoringContext, CodeAction, CodeActionOperation) is public API.

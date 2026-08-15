@@ -5,8 +5,11 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynRefactor;
 
-static class RenameCommand
+sealed class RenameCommand : ICommand
 {
+    public static string Name => "rename";
+    public static string Description => "Rename a symbol across a solution/project";
+
     public static async Task<int> RunAsync(string[] args)
     {
         string? projectPath = null;
