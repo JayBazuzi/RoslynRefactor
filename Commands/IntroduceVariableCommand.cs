@@ -22,25 +22,22 @@ sealed class IntroduceVariableCommand : ICommand
 
     public static Command Build()
     {
-        var project = new Option<string>("--project") { Required = true, Description = "Path to a .sln or .csproj file" };
-        var file = new Option<string>("--file") { Required = true, Description = "Path to the file containing the selection" };
-        var startLine = new Option<int>("--start-line") { Required = true, Description = "1-based start line of the selection" };
-        var startColumn = new Option<int>("--start-column") { Required = true, Description = "1-based start column of the selection" };
-        var endLine = new Option<int>("--end-line") { Required = true, Description = "1-based end line of the selection" };
-        var endColumn = new Option<int>("--end-column") { Required = true, Description = "1-based end column of the selection" };
+        var project = CommandSupport.ProjectOption();
+        var file = CommandSupport.FileOption("Path to the file containing the selection");
+        var span = new CommandSupport.SpanOptions();
 
         var command = new Command("introduce-variable", "Introduce a local variable for a selected expression")
         {
-            project, file, startLine, startColumn, endLine, endColumn,
+            project, file, span.StartLine, span.StartColumn, span.EndLine, span.EndColumn,
         };
 
         command.SetAction(async (parseResult, cancellationToken) => await RunAsync(
             parseResult.GetValue(project)!,
             parseResult.GetValue(file)!,
-            parseResult.GetValue(startLine),
-            parseResult.GetValue(startColumn),
-            parseResult.GetValue(endLine),
-            parseResult.GetValue(endColumn),
+            parseResult.GetValue(span.StartLine),
+            parseResult.GetValue(span.StartColumn),
+            parseResult.GetValue(span.EndLine),
+            parseResult.GetValue(span.EndColumn),
             cancellationToken));
 
         return command;
@@ -52,9 +49,7 @@ sealed class IntroduceVariableCommand : ICommand
         using var _ = workspace;
 
         var fullFilePath = Path.GetFullPath(filePath);
-        var document = solution.Projects
-            .SelectMany(p => p.Documents)
-            .FirstOrDefault(d => string.Equals(Path.GetFullPath(d.FilePath ?? ""), fullFilePath, StringComparison.OrdinalIgnoreCase));
+        var document = CommandSupport.FindDocument(solution, fullFilePath);
 
         if (document is null)
         {
@@ -63,7 +58,7 @@ sealed class IntroduceVariableCommand : ICommand
         }
 
         var text = await document.GetTextAsync(cancellationToken);
-        var span = ToSpan(text, startLine, startColumn, endLine, endColumn);
+        var span = CommandSupport.ToSpan(text, startLine, startColumn, endLine, endColumn);
         if (span is null)
         {
             Console.Error.WriteLine($"error: selection is out of range for {fullFilePath}");
@@ -134,24 +129,5 @@ sealed class IntroduceVariableCommand : ICommand
         return title.StartsWith("Introduce local for", StringComparison.Ordinal)
             && !title.StartsWith("Introduce local constant for", StringComparison.Ordinal)
             && !title.Contains("all occurrences of", StringComparison.Ordinal);
-    }
-
-    static TextSpan? ToSpan(SourceText text, int startLine, int startColumn, int endLine, int endColumn)
-    {
-        var start = new LinePosition(startLine - 1, startColumn - 1);
-        var end = new LinePosition(endLine - 1, endColumn - 1);
-        if (start.Line < 0 || start.Line >= text.Lines.Count || end.Line < 0 || end.Line >= text.Lines.Count)
-        {
-            return null;
-        }
-
-        var startPos = text.Lines[start.Line].Start + start.Character;
-        var endPos = text.Lines[end.Line].Start + end.Character;
-        if (endPos < startPos)
-        {
-            return null;
-        }
-
-        return TextSpan.FromBounds(startPos, endPos);
     }
 }

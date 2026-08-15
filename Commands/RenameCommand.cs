@@ -10,8 +10,8 @@ sealed class RenameCommand : ICommand
 {
     public static Command Build()
     {
-        var project = new Option<string>("--project") { Required = true, Description = "Path to a .sln or .csproj file" };
-        var file = new Option<string>("--file") { Required = true, Description = "Path to the file containing the symbol" };
+        var project = CommandSupport.ProjectOption();
+        var file = CommandSupport.FileOption("Path to the file containing the symbol");
         var line = new Option<int>("--line") { Required = true, Description = "1-based line of the symbol" };
         var column = new Option<int>("--column") { Required = true, Description = "1-based column of the symbol" };
         var to = new Option<string>("--to") { Required = true, Description = "The new name for the symbol" };
@@ -38,9 +38,7 @@ sealed class RenameCommand : ICommand
         using var _ = workspace;
 
         var fullFilePath = Path.GetFullPath(filePath);
-        var document = solution.Projects
-            .SelectMany(p => p.Documents)
-            .FirstOrDefault(d => string.Equals(Path.GetFullPath(d.FilePath ?? ""), fullFilePath, StringComparison.OrdinalIgnoreCase));
+        var document = CommandSupport.FindDocument(solution, fullFilePath);
 
         if (document is null)
         {
