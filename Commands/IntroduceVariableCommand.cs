@@ -3,7 +3,6 @@ using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynRefactor;
@@ -71,10 +70,6 @@ sealed class IntroduceVariableCommand : ICommand
             return 1;
         }
 
-        var originalRoot = await document.GetSyntaxRootAsync(cancellationToken);
-        var existingVariableNames = originalRoot?.DescendantNodes().OfType<VariableDeclaratorSyntax>()
-            .Select(v => v.Identifier.Text).ToHashSet() ?? [];
-
         var actions = new List<CodeAction>();
         var context = new CodeRefactoringContext(document, span.Value, actions.Add, cancellationToken);
         await Provider.Value.ComputeRefactoringsAsync(context);
@@ -104,27 +99,8 @@ sealed class IntroduceVariableCommand : ICommand
         }
 
         var newSolution = applyOperation.ChangedSolution;
-        var newDocument = newSolution.GetDocument(document.Id)!;
-        var newRoot = await newDocument.GetSyntaxRootAsync(cancellationToken);
 
-        var newDeclarators = newRoot?.DescendantNodes().OfType<VariableDeclaratorSyntax>()
-            .Where(v => !existingVariableNames.Contains(v.Identifier.Text))
-            .ToList();
-        if (newDeclarators is null || newDeclarators.Count != 1)
-        {
-            Console.Error.WriteLine($"error: could not uniquely identify the introduced variable ({newDeclarators?.Count ?? 0} candidates found).");
-            return 1;
-        }
-
-        var semanticModel = await newDocument.GetSemanticModelAsync(cancellationToken);
-        var introducedSymbol = semanticModel?.GetDeclaredSymbol(newDeclarators[0], cancellationToken);
-        if (introducedSymbol is null)
-        {
-            Console.Error.WriteLine("error: could not resolve the symbol for the introduced variable.");
-            return 1;
-        }
-
-        Console.WriteLine($"Introducing '{introducedSymbol.Name}' ({fullFilePath})");
+        Console.WriteLine($"Introducing variable ({fullFilePath})");
 
         if (!workspace.TryApplyChanges(newSolution))
         {
