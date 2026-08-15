@@ -3,7 +3,6 @@ using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynRefactor;
@@ -71,17 +70,6 @@ sealed class ExtractMethodCommand : ICommand
             return 1;
         }
 
-        var originalRoot = await document.GetSyntaxRootAsync(cancellationToken);
-        var enclosingType = originalRoot?.FindToken(Math.Clamp(span.Value.Start, 0, Math.Max(0, originalRoot.FullSpan.End - 1)))
-            .Parent?.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().FirstOrDefault();
-        if (enclosingType is null)
-        {
-            Console.Error.WriteLine("error: selection is not inside a type declaration.");
-            return 1;
-        }
-
-        var existingMethodNames = enclosingType.Members.OfType<MethodDeclarationSyntax>().Select(m => m.Identifier.Text).ToHashSet();
-
         var actions = new List<CodeAction>();
         var context = new CodeRefactoringContext(document, span.Value, actions.Add, cancellationToken);
         await Provider.Value.ComputeRefactoringsAsync(context);
@@ -102,29 +90,8 @@ sealed class ExtractMethodCommand : ICommand
         }
 
         var newSolution = applyOperation.ChangedSolution;
-        var newDocument = newSolution.GetDocument(document.Id)!;
-        var newRoot = await newDocument.GetSyntaxRootAsync(cancellationToken);
-        var newEnclosingType = newRoot?.DescendantNodes().OfType<TypeDeclarationSyntax>()
-            .FirstOrDefault(t => t.Identifier.Text == enclosingType.Identifier.Text);
 
-        var newMethods = newEnclosingType?.Members.OfType<MethodDeclarationSyntax>()
-            .Where(m => !existingMethodNames.Contains(m.Identifier.Text))
-            .ToList();
-        if (newMethods is null || newMethods.Count != 1)
-        {
-            Console.Error.WriteLine($"error: could not uniquely identify the extracted method ({newMethods?.Count ?? 0} candidates found).");
-            return 1;
-        }
-
-        var semanticModel = await newDocument.GetSemanticModelAsync(cancellationToken);
-        var extractedSymbol = semanticModel?.GetDeclaredSymbol(newMethods[0], cancellationToken);
-        if (extractedSymbol is null)
-        {
-            Console.Error.WriteLine("error: could not resolve the symbol for the extracted method.");
-            return 1;
-        }
-
-        Console.WriteLine($"Extracting selection into '{extractedSymbol.Name}' ({fullFilePath})");
+        Console.WriteLine($"Extracting selection into a new method ({fullFilePath})");
 
         if (!workspace.TryApplyChanges(newSolution))
         {
