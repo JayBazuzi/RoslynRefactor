@@ -7,6 +7,11 @@ static class WorkspaceLoader
 {
     public static async Task<(MSBuildWorkspace Workspace, Solution Solution)> OpenAsync(string path)
     {
+        if (Path.GetExtension(path).ToLowerInvariant() != ".sln")
+        {
+            throw new ArgumentException($"Expected a .sln path, got: {path}");
+        }
+
         var workspace = MSBuildWorkspace.Create();
         workspace.RegisterWorkspaceFailedHandler(e =>
         {
@@ -14,22 +19,7 @@ static class WorkspaceLoader
                 Console.Error.WriteLine($"warning: {e.Diagnostic.Message}");
         });
 
-        Solution solution;
-        var ext = Path.GetExtension(path).ToLowerInvariant();
-        if (ext == ".sln")
-        {
-            solution = await workspace.OpenSolutionAsync(path);
-        }
-        else if (ext == ".csproj")
-        {
-            var project = await workspace.OpenProjectAsync(path);
-            solution = project.Solution;
-        }
-        else
-        {
-            throw new ArgumentException($"Expected a .sln or .csproj path, got: {path}");
-        }
-
+        var solution = await workspace.OpenSolutionAsync(path);
         return (workspace, solution);
     }
 }

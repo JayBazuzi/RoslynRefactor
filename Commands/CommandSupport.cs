@@ -7,7 +7,7 @@ namespace RoslynRefactor;
 static class CommandSupport
 {
     public static Option<string> ProjectOption() =>
-        new("--project") { Required = true, Description = "Path to a .sln or .csproj file" };
+        new("--project") { Required = true, Description = "Path to a .sln file" };
 
     public static Option<string> FileOption(string description) =>
         new("--file") { Required = true, Description = description };
