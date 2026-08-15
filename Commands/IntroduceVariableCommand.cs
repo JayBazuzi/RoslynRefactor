@@ -4,7 +4,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynRefactor;
@@ -22,8 +21,6 @@ sealed class IntroduceVariableCommand : ICommand
         return (CodeRefactoringProvider)Activator.CreateInstance(providerType)!;
     });
 
-    static readonly string[] ValidKinds = ["local", "local-constant", "constant", "field", "query-variable"];
-
     public static Command Build()
     {
         var project = new Option<string>("--project") { Required = true, Description = "Path to a .sln or .csproj file" };
@@ -32,14 +29,10 @@ sealed class IntroduceVariableCommand : ICommand
         var startColumn = new Option<int>("--start-column") { Required = true, Description = "1-based start column of the selection" };
         var endLine = new Option<int>("--end-line") { Required = true, Description = "1-based end line of the selection" };
         var endColumn = new Option<int>("--end-column") { Required = true, Description = "1-based end column of the selection" };
-        var kind = new Option<string>("--kind") { DefaultValueFactory = _ => "local", Description = "Kind of variable to introduce" };
-        kind.AcceptOnlyFromAmong(ValidKinds);
-        var allOccurrences = new Option<bool>("--all-occurrences") { Description = "Replace every matching occurrence in scope, not just the selected one" };
-        var name = new Option<string>("--name") { Description = "Rename the generated variable to this name" };
 
         var command = new Command("introduce-variable", "Introduce a local variable for a selected expression")
         {
-            project, file, startLine, startColumn, endLine, endColumn, kind, allOccurrences, name,
+            project, file, startLine, startColumn, endLine, endColumn,
         };
 
         command.SetAction(async (parseResult, cancellationToken) => await RunAsync(
@@ -49,15 +42,12 @@ sealed class IntroduceVariableCommand : ICommand
             parseResult.GetValue(startColumn),
             parseResult.GetValue(endLine),
             parseResult.GetValue(endColumn),
-            parseResult.GetValue(kind)!,
-            parseResult.GetValue(allOccurrences),
-            parseResult.GetValue(name),
             cancellationToken));
 
         return command;
     }
 
-    static async Task<int> RunAsync(string projectPath, string filePath, int startLine, int startColumn, int endLine, int endColumn, string kind, bool allOccurrences, string? newName, CancellationToken cancellationToken)
+    static async Task<int> RunAsync(string projectPath, string filePath, int startLine, int startColumn, int endLine, int endColumn, CancellationToken cancellationToken)
     {
         var (workspace, solution) = await WorkspaceLoader.OpenAsync(projectPath);
         using var _ = workspace;
@@ -92,10 +82,10 @@ sealed class IntroduceVariableCommand : ICommand
         var leaves = new List<CodeAction>();
         CollectLeaves(actions, leaves);
 
-        var candidates = leaves.Where(a => MatchesKindAndScope(a.Title, kind, allOccurrences)).ToList();
+        var candidates = leaves.Where(a => MatchesKindAndScope(a.Title)).ToList();
         if (candidates.Count == 0)
         {
-            Console.Error.WriteLine($"error: no '{kind}' ({(allOccurrences ? "all occurrences" : "single occurrence")}) Introduce Variable refactoring is available for this selection.");
+            Console.Error.WriteLine("error: no 'local' (single occurrence) Introduce Variable refactoring is available for this selection.");
             return 1;
         }
         if (candidates.Count > 1)
@@ -134,16 +124,7 @@ sealed class IntroduceVariableCommand : ICommand
             return 1;
         }
 
-        if (newName is not null && newName != introducedSymbol.Name)
-        {
-            var renameOptions = new SymbolRenameOptions();
-            newSolution = await Renamer.RenameSymbolAsync(newSolution, introducedSymbol, renameOptions, newName, cancellationToken);
-            Console.WriteLine($"Introducing '{introducedSymbol.Name}' ({fullFilePath}), renamed to '{newName}'");
-        }
-        else
-        {
-            Console.WriteLine($"Introducing '{introducedSymbol.Name}' ({fullFilePath})");
-        }
+        Console.WriteLine($"Introducing '{introducedSymbol.Name}' ({fullFilePath})");
 
         if (!workspace.TryApplyChanges(newSolution))
         {
@@ -171,31 +152,12 @@ sealed class IntroduceVariableCommand : ICommand
         }
     }
 
-    static bool MatchesKindAndScope(string title, string kind, bool allOccurrences)
+    static bool MatchesKindAndScope(string title)
     {
-        var prefix = kind switch
-        {
-            "local" => "Introduce local for",
-            "local-constant" => "Introduce local constant for",
-            "constant" => "Introduce constant for",
-            "field" => "Introduce field for",
-            "query-variable" => "Introduce query variable for",
-            _ => throw new ArgumentOutOfRangeException(nameof(kind)),
-        };
-
-        if (!title.StartsWith(prefix, StringComparison.Ordinal))
-        {
-            return false;
-        }
-
         // "Introduce local for" is also a prefix of "Introduce local constant for", so exclude that case explicitly.
-        if (kind == "local" && title.StartsWith("Introduce local constant for", StringComparison.Ordinal))
-        {
-            return false;
-        }
-
-        var isAllOccurrences = title.Contains("all occurrences of", StringComparison.Ordinal);
-        return isAllOccurrences == allOccurrences;
+        return title.StartsWith("Introduce local for", StringComparison.Ordinal)
+            && !title.StartsWith("Introduce local constant for", StringComparison.Ordinal)
+            && !title.Contains("all occurrences of", StringComparison.Ordinal);
     }
 
     static TextSpan? ToSpan(SourceText text, int startLine, int startColumn, int endLine, int endColumn)
