@@ -1,5 +1,8 @@
 # RoslynRefactor
 
+[![Build and Test](https://github.com/JayBazuzi/RoslynRefactor/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/JayBazuzi/RoslynRefactor/actions/workflows/build-and-test.yml)
+[![NuGet](https://img.shields.io/nuget/v/RoslynRefactor.svg)](https://www.nuget.org/packages/RoslynRefactor)
+
 A command-line tool for running Roslyn-powered refactorings against a C# solution from scripts or an AI agent. Supported refactorings:
 
 <!-- snippet: Tests/_approvals/RoslynRefactorRootCommandTests.RootCommand_has_expected_subcommands.approved.txt -->
