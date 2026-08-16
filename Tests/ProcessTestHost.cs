@@ -11,7 +11,7 @@ static class ProcessTestHost
 {
     // The ProjectReference to RoslynRefactor.csproj guarantees this assembly is built and
     // available alongside the test assembly; using its location avoids hardcoding a path.
-    static readonly string ToolDllPath = typeof(RoslynRefactor.ICommand).Assembly.Location.Replace(".dll", ".exe");
+    static readonly string ToolDllPath = typeof(RoslynRefactor.ICommand).Assembly.Location.Replace(".dll", OperatingSystem.IsWindows() ? ".exe" : "");
 
     static readonly string FixturesSourceDir = FindFixturesSourceDir();
 
