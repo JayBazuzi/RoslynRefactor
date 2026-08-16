@@ -7,6 +7,24 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>roslynrefactor</ToolCommandName>
+    <PackageId>RoslynRefactor</PackageId>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <Authors>Jay Bazuzi</Authors>
+    <Description>A command-line tool for running Roslyn-powered refactorings against a C# solution from scripts or an AI agent.</Description>
+    <PackageProjectUrl>https://github.com/JayBazuzi/RoslynRefactor</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/JayBazuzi/RoslynRefactor</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>roslyn;refactoring;cli;dotnet-tool</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="RoslynRefactor.Tests" />
   </ItemGroup>
