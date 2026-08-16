@@ -16,7 +16,7 @@ public class RoslynRefactorRootCommandTests
         markdown.AppendLine("| --- | --- |");
         foreach (var command in root.Subcommands.OrderBy(c => c.Name))
         {
-            var fileName = $"RoslynRefactorRootCommandTests.ApproveHelpText.{command.Name.Replace(" ", "_")}.approved.md";
+            var fileName = $"https://raw.githubusercontent.com/JayBazuzi/RoslynRefactor/refs/heads/main/Tests/_approvals/RoslynRefactorRootCommandTests.ApproveHelpText.{command.Name.Replace(" ", "_")}.approved.md";
             markdown.AppendLine($"| [{command.Name}]({fileName}) | {command.Description} |");
         }
 
