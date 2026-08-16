@@ -2,8 +2,8 @@
 
 A command-line tool for running Roslyn-powered refactorings against a C# solution from scripts or an AI agent. Supported refactorings:
 
-<!-- snippet: Tests\_approvals\RoslynRefactorRootCommandTests.RootCommand_has_expected_subcommands.approved.txt -->
-<a id='snippet-Tests\_approvals\RoslynRefactorRootCommandTests.RootCommand_has_expected_subcommands.approved.txt'></a>
+<!-- snippet: Tests/_approvals/RoslynRefactorRootCommandTests.RootCommand_has_expected_subcommands.approved.txt -->
+<a id='snippet-Tests/_approvals/RoslynRefactorRootCommandTests.RootCommand_has_expected_subcommands.approved.txt'></a>
 ```txt
 rename
 extract-method
@@ -11,7 +11,7 @@ introduce-variable
 convert-to-linq-call-form
 convert-to-linq-query-form
 ```
-<sup><a href='#snippet-Tests\_approvals\RoslynRefactorRootCommandTests.RootCommand_has_expected_subcommands.approved.txt' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/Tests/_approvals/RoslynRefactorRootCommandTests.RootCommand_has_expected_subcommands.approved.txt#L1-L5' title='Snippet source file'>snippet source</a> | <a href='#snippet-Tests/_approvals/RoslynRefactorRootCommandTests.RootCommand_has_expected_subcommands.approved.txt' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Example
