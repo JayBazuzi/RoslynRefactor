@@ -11,6 +11,8 @@ static class CommandLine
             RenameCommand.Build(),
             ExtractMethodCommand.Build(),
             IntroduceVariableCommand.Build(),
+            ConvertToLinqCallFormCommand.Build(),
+            ConvertToLinqQueryFormCommand.Build(),
         };
 
         try
