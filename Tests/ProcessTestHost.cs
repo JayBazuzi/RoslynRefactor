@@ -26,7 +26,7 @@ static class ProcessTestHost
 
     public static async Task<ProcessResult> RunAsync(params string[] args)
     {
-        ProcessStartInfo psi = NewMethod(args); using var process = Process.Start(psi)!;
+        ProcessStartInfo psi = CreateRoslynRefactorProcessStartInfo(args); using var process = Process.Start(psi)!;
         var stdoutTask = process.StandardOutput.ReadToEndAsync();
         var stderrTask = process.StandardError.ReadToEndAsync();
         await process.WaitForExitAsync();
@@ -35,7 +35,7 @@ static class ProcessTestHost
         return new ProcessResult(process.ExitCode, await stdoutTask, await stderrTask);
     }
 
-    private static ProcessStartInfo NewMethod(string[] args)
+    private static ProcessStartInfo CreateRoslynRefactorProcessStartInfo(string[] args)
     {
         var psi = new ProcessStartInfo(@".\bin\Debug\net10.0\RoslynRefactor.exe")
         {
