@@ -20,7 +20,6 @@ public class EndToEndTests
             "--start-line", "21", "--start-column", "9",
             "--end-line", "27", "--end-column", "10");
 
-        Assert.Equal(0, result.ExitCode);
         var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
         Approvals.Verify(content);
     }
@@ -37,7 +36,6 @@ public class EndToEndTests
             "--start-line", "17", "--start-column", "27",
             "--end-line", "17", "--end-column", "38");
 
-        Assert.Equal(0, result.ExitCode);
         var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
         Approvals.Verify(content);
     }
@@ -54,7 +52,6 @@ public class EndToEndTests
             "--line", "16", "--column", "13",
             "--to", "newName");
 
-        Assert.Equal(0, result.ExitCode);
         var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
         Approvals.Verify(content);
     }
@@ -71,7 +68,6 @@ public class EndToEndTests
             "--start-line", "21", "--start-column", "9",
             "--end-line", "27", "--end-column", "10");
 
-        Assert.Equal(0, result.ExitCode);
         var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
         Approvals.Verify(content);
     }
@@ -88,7 +84,6 @@ public class EndToEndTests
             "--start-line", "21", "--start-column", "9",
             "--end-line", "27", "--end-column", "10");
 
-        Assert.Equal(0, result.ExitCode);
         var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
         Approvals.Verify(content);
     }

@@ -30,6 +30,7 @@ static class ProcessTestHost
         var stdoutTask = process.StandardOutput.ReadToEndAsync();
         var stderrTask = process.StandardError.ReadToEndAsync();
         await process.WaitForExitAsync();
+        Assert.Equal(0, process.ExitCode);
 
         return new ProcessResult(process.ExitCode, await stdoutTask, await stderrTask);
     }
