@@ -1,5 +1,0 @@
-﻿rename
-extract-method
-introduce-variable
-convert-to-linq-call-form
-convert-to-linq-query-form

@@ -1,42 +1,46 @@
 using System.CommandLine;
+using ApprovalTests.Namers;
+using System.Linq;
 
 namespace RoslynRefactor.Tests;
 
 public class RoslynRefactorRootCommandTests
 {
     [Fact]
-    public void RootCommand_has_expected_subcommands()
-    {
-        var root = new RoslynRefactorRootCommand();
-
-        var subcommandNames = root.Subcommands.Select(c => c.Name).ToList();
-        Verify(string.Join(Environment.NewLine, subcommandNames));
-    }
-
-    [Fact]
-    public void ApproveAllHelpText()
+    public void ApproveIndexOfAvailableCommands()
     {
         var root = new RoslynRefactorRootCommand();
 
         var markdown = new System.Text.StringBuilder();
-        markdown.AppendLine("# RoslynRefactor CLI help");
-        markdown.AppendLine();
-        AppendHelp(markdown, "RoslynRefactor", root);
-
+        markdown.AppendLine("| Command | Description |");
+        markdown.AppendLine("| --- | --- |");
         foreach (var command in root.Subcommands.OrderBy(c => c.Name))
         {
-            AppendHelp(markdown, $"RoslynRefactor {command.Name}", command);
+            var fileName = $"RoslynRefactorRootCommandTests.ApproveHelpText.{command.Name.Replace(" ", "_")}.approved.md";
+            markdown.AppendLine($"| [{command.Name}]({fileName}) | {command.Description} |");
         }
 
         VerifyWithExtension(markdown.ToString(), ".md");
     }
 
-    static void AppendHelp(System.Text.StringBuilder markdown, string title, Command command)
+
+    public static IEnumerable<object[]> Commands()
     {
-        markdown.AppendLine($"## {title}");
+        var root = new RoslynRefactorRootCommand();
+        return root.Subcommands.OrderBy(c => c.Name).Select(command => new object[] { command });
+    }
+
+    [Theory]
+    [MemberData(nameof(Commands))]
+    public void ApproveHelpText(Command command)
+    {
+        var markdown = new System.Text.StringBuilder();
+        markdown.AppendLine($"## {command.Name}");
         markdown.AppendLine();
         markdown.AppendLine(GetHelpText(command).TrimEnd());
-        markdown.AppendLine();
+
+        NamerFactory.AdditionalInformation = command.Name.Replace(" ", "_");
+        VerifyWithExtension(markdown.ToString(), ".md");
     }
 
     static string GetHelpText(Command command)
