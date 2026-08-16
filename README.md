@@ -19,3 +19,7 @@ convert-to-linq-query-form
 RoslynRefactor.exe extract-method --project Sample.sln --file Sample/Program.cs --start-line 21 --start-column 9 --end-line 27 --end-column 10
 ```
 <!-- endSnippet -->
+
+## Using with AI coding agents
+
+See this project's [AGENTS.md](AGENTS.md).
