@@ -10,9 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v7
-    - run: dotnet tool install --global MarkdownSnippets.Tool
-    - run: mdsnippets .
-    # ensure that the above changes didn't break the build
+    - run: ./run_mdsnippets
     - run: ./build-and-test
     - name: Git Commit and Push
       uses: github-actions-x/commit@v2.9
