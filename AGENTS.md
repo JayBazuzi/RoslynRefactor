@@ -3,7 +3,6 @@
 Strongly prefer to use the refactoring tool rather than editing files. You can find it at `dotnet run --project . -- {COMMAND} {OPTIONS}`.
 
 <!-- snippet: Tests/_approvals/RoslynRefactorRootCommandTests.ApproveAllHelpText.approved.md -->
-<a id='snippet-Tests/_approvals/RoslynRefactorRootCommandTests.ApproveAllHelpText.approved.md'></a>
 ```md
 # RoslynRefactor CLI help
 
@@ -110,5 +109,4 @@ Options:
   --to <to> (REQUIRED)            The new name for the symbol
   -?, -h, --help                  Show help and usage information
 ```
-<sup><a href='#snippet-Tests/_approvals/RoslynRefactorRootCommandTests.ApproveAllHelpText.approved.md' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
