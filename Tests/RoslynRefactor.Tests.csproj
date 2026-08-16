@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RoslynRefactor.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The fixture is a standalone sample solution built by the tests via MSBuildWorkspace; it must not be part of this test project's own compilation. -->
+    <Compile Remove="Fixtures\**" />
+    <Content Remove="Fixtures\**" />
+    <None Remove="Fixtures\**" />
+  </ItemGroup>
+
+</Project>
