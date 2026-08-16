@@ -25,4 +25,4 @@ RoslynRefactor.exe extract-method --project Sample.sln --file Sample/Program.cs 
 
 ## Using with AI coding agents
 
-See this project's [AGENTS.md](AGENTS.md).
+See this project's [AGENTS.md](https://github.com/JayBazuzi/RoslynRefactor/blob/main/AGENTS.md).
