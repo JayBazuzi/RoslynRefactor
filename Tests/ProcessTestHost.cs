@@ -26,6 +26,16 @@ static class ProcessTestHost
 
     public static async Task<ProcessResult> RunAsync(params string[] args)
     {
+        ProcessStartInfo psi = NewMethod(args); using var process = Process.Start(psi)!;
+        var stdoutTask = process.StandardOutput.ReadToEndAsync();
+        var stderrTask = process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync();
+
+        return new ProcessResult(process.ExitCode, await stdoutTask, await stderrTask);
+    }
+
+    private static ProcessStartInfo NewMethod(string[] args)
+    {
         var psi = new ProcessStartInfo(@".\bin\Debug\net10.0\RoslynRefactor.exe")
         {
             RedirectStandardOutput = true,
@@ -37,12 +47,7 @@ static class ProcessTestHost
             psi.ArgumentList.Add(arg);
         }
 
-        using var process = Process.Start(psi)!;
-        var stdoutTask = process.StandardOutput.ReadToEndAsync();
-        var stderrTask = process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync();
-
-        return new ProcessResult(process.ExitCode, await stdoutTask, await stderrTask);
+        return psi;
     }
 
     static string FindFixturesSourceDir()
