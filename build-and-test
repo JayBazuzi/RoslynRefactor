@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-dotnet test /verbosity:minimal "$*"
+dotnet test Tests/RoslynRefactor.Tests.csproj /verbosity:minimal "$*"
