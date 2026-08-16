@@ -1,3 +1,5 @@
+using ApprovalTests.Namers;
+
 namespace RoslynRefactor.Tests;
 
 // One black-box test per command: run the real built exe against a scratch copy of the
@@ -20,8 +22,7 @@ public class EndToEndTests
 
         Assert.Equal(0, result.ExitCode);
         var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
-        Assert.Contains("NewMethod(widgets, results);", content); // call site left behind in Main
-        Assert.Contains("void NewMethod(", content); // extracted method contains the moved foreach
+        Approvals.Verify(content);
     }
 
     [Fact]
@@ -38,8 +39,7 @@ public class EndToEndTests
 
         Assert.Equal(0, result.ExitCode);
         var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
-        Assert.Contains("= oldName * 2;", content); // the new local's initializer
-        Assert.Contains("Console.WriteLine(value);", content); // call site now uses the new local
+        Approvals.Verify(content);
     }
 
     [Fact]
@@ -56,9 +56,7 @@ public class EndToEndTests
 
         Assert.Equal(0, result.ExitCode);
         var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
-        Assert.Contains("int newName = 42;", content);
-        Assert.Contains("Console.WriteLine(newName * 2);", content);
-        Assert.DoesNotContain("oldName", content);
+        Approvals.Verify(content);
     }
 
     [Fact]
@@ -75,8 +73,7 @@ public class EndToEndTests
 
         Assert.Equal(0, result.ExitCode);
         var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
-        Assert.DoesNotContain("foreach (var widget in widgets)", content);
-        Assert.Contains(".Where(", content);
+        Approvals.Verify(content);
     }
 
     [Fact]
@@ -93,7 +90,6 @@ public class EndToEndTests
 
         Assert.Equal(0, result.ExitCode);
         var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
-        Assert.DoesNotContain("foreach (var widget in widgets)", content);
-        Assert.Contains("from ", content);
+        Approvals.Verify(content);
     }
 }

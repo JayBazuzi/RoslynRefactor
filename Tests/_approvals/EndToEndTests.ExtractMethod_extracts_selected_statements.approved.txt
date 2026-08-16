@@ -1,0 +1,34 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Sample;
+
+class Widget
+{
+    public int Value;
+}
+
+class Program
+{
+    static void Main()
+    {
+        int oldName = 42;
+        Console.WriteLine(oldName * 2);
+
+        var widgets = new List<Widget> { new Widget { Value = 1 }, new Widget { Value = 2 } };
+        var results = new List<int>();
+        NewMethod(widgets, results);
+    }
+
+    private static void NewMethod(List<Widget> widgets, List<int> results)
+    {
+        foreach (var widget in widgets)
+        {
+            if (widget.Value > 0)
+            {
+                results.Add(widget.Value * 2);
+            }
+        }
+    }
+}
