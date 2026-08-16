@@ -26,13 +26,12 @@ static class ProcessTestHost
 
     public static async Task<ProcessResult> RunAsync(params string[] args)
     {
-        var psi = new ProcessStartInfo("dotnet")
+        var psi = new ProcessStartInfo(@".\bin\Debug\net10.0\RoslynRefactor.exe")
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
         };
-        psi.ArgumentList.Add(ToolDllPath);
         foreach (var arg in args)
         {
             psi.ArgumentList.Add(arg);
