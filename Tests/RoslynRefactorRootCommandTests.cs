@@ -48,6 +48,6 @@ public class RoslynRefactorRootCommandTests
             Error = writer,
         };
         command.Parse("--help").Invoke(config);
-        return writer.ToString();
+        return writer.ToString().Replace("testhost", "RoslynRefactor");
     }
 }

@@ -12,7 +12,7 @@ Description:
   RoslynRefactor - Roslyn-powered C# refactoring CLI
 
 Usage:
-  testhost [command] [options]
+  RoslynRefactor [command] [options]
 
 Options:
   -?, -h, --help  Show help and usage information
@@ -31,7 +31,7 @@ Description:
   Convert a foreach loop into a LINQ expression using fluent method calls (Where/Select)
 
 Usage:
-  testhost convert-to-linq-call-form [options]
+  RoslynRefactor convert-to-linq-call-form [options]
 
 Options:
   --project <project> (REQUIRED)            Path to a .sln or .csproj file
@@ -48,7 +48,7 @@ Description:
   Convert a foreach loop into a LINQ expression using query syntax (from/where/select)
 
 Usage:
-  testhost convert-to-linq-query-form [options]
+  RoslynRefactor convert-to-linq-query-form [options]
 
 Options:
   --project <project> (REQUIRED)            Path to a .sln or .csproj file
@@ -65,7 +65,7 @@ Description:
   Extract selected statements into a new method
 
 Usage:
-  testhost extract-method [options]
+  RoslynRefactor extract-method [options]
 
 Options:
   --project <project> (REQUIRED)            Path to a .sln or .csproj file
@@ -82,7 +82,7 @@ Description:
   Introduce a local variable for a selected expression
 
 Usage:
-  testhost introduce-variable [options]
+  RoslynRefactor introduce-variable [options]
 
 Options:
   --project <project> (REQUIRED)            Path to a .sln or .csproj file
@@ -99,7 +99,7 @@ Description:
   Rename a symbol across a solution/project
 
 Usage:
-  testhost rename [options]
+  RoslynRefactor rename [options]
 
 Options:
   --project <project> (REQUIRED)  Path to a .sln or .csproj file
