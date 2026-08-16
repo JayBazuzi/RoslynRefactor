@@ -7,9 +7,10 @@ static class WorkspaceLoader
 {
     public static async Task<(MSBuildWorkspace Workspace, Solution Solution)> OpenAsync(string path)
     {
-        if (Path.GetExtension(path).ToLowerInvariant() != ".sln")
+        var extension = Path.GetExtension(path).ToLowerInvariant();
+        if (extension != ".sln" && extension != ".csproj")
         {
-            throw new ArgumentException($"Expected a .sln path, got: {path}");
+            throw new ArgumentException($"Expected a .sln or .csproj path, got: {path}");
         }
 
         var workspace = MSBuildWorkspace.Create();
@@ -19,7 +20,16 @@ static class WorkspaceLoader
                 Console.Error.WriteLine($"warning: {e.Diagnostic.Message}");
         });
 
-        var solution = await workspace.OpenSolutionAsync(path);
-        return (workspace, solution);
+        switch (extension)
+        {
+            case ".csproj":
+                var project = await workspace.OpenProjectAsync(path);
+                return (workspace, project.Solution);
+            case ".sln":
+                var solution = await workspace.OpenSolutionAsync(path);
+                return (workspace, solution);
+            default:
+                throw new ArgumentException($"Expected a .sln or .csproj path, got: {path}");
+        }
     }
 }
