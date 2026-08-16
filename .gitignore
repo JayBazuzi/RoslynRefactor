@@ -1,2 +1,6 @@
 bin/
 obj/
+
+settings.local.json
+
+*.received.*
