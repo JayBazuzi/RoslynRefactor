@@ -3,20 +3,26 @@ namespace RoslynRefactor.Tests;
 // Specification for the `extract-iefe` command, which does not exist yet - these tests are red on
 // purpose.
 //
-// Extract IEFE (Immediately-Executed Function Expression) wraps the selected statements in a lambda
-// that is invoked right where they were:
+// Extract IEFE (Immediately-Executed Function Expression) wraps the selection in a lambda that is
+// invoked right where the selection was. A selection of whole statements becomes an Action:
 //
 //     ((Action)(() =>
 //     {
 //         // the selected statements
 //     }))();
 //
-// It is the safe half of Extract Method. Because the lambda closes over everything it uses, no
-// parameter list or return type has to be invented, so the move is mechanical and behavior-
-// preserving; turning the IEFE into a real method (naming it, hoisting captures into parameters) is
-// a separate step. That only holds while the selection is something a lambda can express, so the
-// cases a lambda cannot express - control flow that leaves the selection, ref/out capture, locals
-// that escape the selection - must be refused rather than silently changing behavior.
+// A selection of a single expression instead becomes a Func<T> (or an Action, when the expression's
+// type is void) evaluated in place, so it can sit inside a larger expression:
+//
+//     ((Func<T>)(() => the selected expression))()
+//
+// Either way it is the safe half of Extract Method. Because the lambda closes over everything it
+// uses, no parameter list or return type has to be invented, so the move is mechanical and
+// behavior-preserving; turning the IEFE into a real method (naming it, hoisting captures into
+// parameters) is a separate step. That only holds while the selection is something a lambda can
+// express, so the cases a lambda cannot express - control flow that leaves the selection, ref/out
+// capture, locals that escape the selection - must be refused rather than silently changing
+// behavior.
 //
 // Each case lives on disk under Fixtures/ExtractIefe/{Accepts,Refuses}/<CaseName>, so adding a case
 // is adding a folder, not editing this file.
