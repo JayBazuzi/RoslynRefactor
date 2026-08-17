@@ -1,0 +1,73 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Sample;
+
+class LambdaCaptures
+{
+    public static void SingleCapture()
+    {
+        int threshold = 10;
+        Func<int, bool> isAboveThreshold = x => x > threshold;
+        Console.WriteLine(isAboveThreshold(5));
+        Console.WriteLine(isAboveThreshold(20));
+    }
+
+    public static void MultipleCaptures()
+    {
+        int min = 1;
+        int max = 10;
+        var isInRange = (int x) => x >= min && x <= max;
+        Console.WriteLine(isInRange(5));
+    }
+
+    public static void MultipleCallSites()
+    {
+        int offset = 5;
+        var addOffset = (int n) => n + offset;
+        Console.WriteLine(addOffset(1));
+        Console.WriteLine(addOffset(2));
+        Console.WriteLine(addOffset(3));
+    }
+
+    public static void NoCaptures()
+    {
+        Func<int, int> square = x => x * x;
+        Console.WriteLine(square(4));
+    }
+
+    public static void CaptureMutatedBetweenDeclarationAndCall()
+    {
+        int counter = 0;
+        Action report = () => Console.WriteLine(counter);
+        counter = 5;
+        report();
+    }
+
+    public static void StatementBodiedLambdaWithCaptureInsideIfBlock()
+    {
+        int limit = 100;
+        Action<int, int> warnIfOverLimit = (value, limit1) =>
+        {
+            if (value > limit1)
+            {
+                Console.WriteLine("over limit");
+            }
+        };
+        warnIfOverLimit(150, limit);
+    }
+
+    public static List<int> CaptureUsedInLinqSelect()
+    {
+        var numbers = new List<int> { 1, 2, 3 };
+        int multiplier = 2;
+        return numbers.Select(n => n * multiplier).ToList();
+    }
+
+    public static Func<int, bool> LambdaEscapesDeclaringScope()
+    {
+        int threshold = 10;
+        return x => x > threshold;
+    }
+}

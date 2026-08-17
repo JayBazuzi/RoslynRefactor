@@ -11,5 +11,6 @@ sealed class RoslynRefactorRootCommand : RootCommand
         Add(IntroduceVariableCommand.Build());
         Add(ConvertToLinqCallFormCommand.Build());
         Add(ConvertToLinqQueryFormCommand.Build());
+        Add(ConvertLambdaCapturesToParametersCommand.Build());
     }
 }

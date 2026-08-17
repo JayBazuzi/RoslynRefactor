@@ -26,11 +26,20 @@ static class ProcessTestHost
 
     public static async Task<ProcessResult> RunAsync(params string[] args)
     {
+        var result = await RunAllowingFailureAsync(args);
+        Assert.Equal(0, result.ExitCode);
+
+        return result;
+    }
+
+    // For asserting on the error path: a refactoring that is unavailable for the given selection
+    // should exit non-zero and leave the target file untouched, rather than crash or apply a change.
+    public static async Task<ProcessResult> RunAllowingFailureAsync(params string[] args)
+    {
         ProcessStartInfo psi = CreateRoslynRefactorProcessStartInfo(args); using var process = Process.Start(psi)!;
         var stdoutTask = process.StandardOutput.ReadToEndAsync();
         var stderrTask = process.StandardError.ReadToEndAsync();
         await process.WaitForExitAsync();
-        Assert.Equal(0, process.ExitCode);
 
         return new ProcessResult(process.ExitCode, await stdoutTask, await stderrTask);
     }
@@ -84,4 +93,9 @@ static class ProcessTestHost
 
 record ProcessResult(int ExitCode, string StdOut, string StdErr);
 
-record SampleCopy(string SolutionPath, string ProgramFilePath);
+record SampleCopy(string SolutionPath, string ProgramFilePath)
+{
+    // Program.cs is the only file most tests care about, so it gets its own property; other fixture
+    // files in the Sample project are addressed by name relative to the same directory.
+    public string FilePath(string fileName) => Path.Combine(Path.GetDirectoryName(ProgramFilePath)!, fileName);
+}
