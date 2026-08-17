@@ -1,0 +1,2 @@
+doubled
+declared in the selection

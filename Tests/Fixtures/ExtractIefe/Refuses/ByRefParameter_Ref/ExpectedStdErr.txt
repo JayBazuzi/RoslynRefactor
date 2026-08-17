@@ -1,0 +1,2 @@
+value
+cannot be captured

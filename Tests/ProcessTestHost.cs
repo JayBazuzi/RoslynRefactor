@@ -13,7 +13,7 @@ static class ProcessTestHost
     // available alongside the test assembly; using its location avoids hardcoding a path.
     static readonly string ToolDllPath = typeof(RoslynRefactor.ICommand).Assembly.Location.Replace(".dll", OperatingSystem.IsWindows() ? ".exe" : "");
 
-    static readonly string FixturesSourceDir = FindFixturesSourceDir();
+    public static readonly string FixturesSourceDir = FindFixturesSourceDir();
 
     public static SampleCopy CreateSampleCopy()
     {
