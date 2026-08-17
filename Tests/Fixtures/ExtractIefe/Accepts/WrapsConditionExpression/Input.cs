@@ -4,7 +4,7 @@ class Program
 {
     static void Main(bool flag)
     {
-        if ([|flag == true|])
+        if (/*start*/flag == true/*end*/)
         {
             Console.WriteLine("yes");
         }

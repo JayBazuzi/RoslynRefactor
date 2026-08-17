@@ -4,10 +4,10 @@ class Program
 {
     static int Main(bool flag)
     {
-        [|if (flag)
+        /*start*/if (flag)
         {
             return 1;
-        }|]
+        }/*end*/
 
         return 0;
     }

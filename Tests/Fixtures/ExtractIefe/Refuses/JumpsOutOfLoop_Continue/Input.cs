@@ -6,12 +6,12 @@ class Program
     {
         for (var i = 0; i < 10; i++)
         {
-            [|if (i > 3)
+            /*start*/if (i > 3)
             {
                 continue;
             }
 
-            Console.WriteLine(i);|]
+            Console.WriteLine(i);/*end*/
         }
     }
 }

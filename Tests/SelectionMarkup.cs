@@ -3,14 +3,17 @@ using Microsoft.CodeAnalysis.Text;
 namespace RoslynRefactor.Tests;
 
 /// <summary>
-/// A test source that marks the selection to refactor with <c>[|</c> ... <c>|]</c>, the way Roslyn's
-/// own tests do. Parsing gives back the source without the markers plus the 1-based line/column pair
-/// the CLI wants, so a test case reads as source-in/source-out instead of hand-counted coordinates.
+/// A test source that marks the selection to refactor with the block comments <c>/*start*/</c> ...
+/// <c>/*end*/</c>. Comments are legal C# anywhere whitespace is, so an Input.cs fixture is valid,
+/// compilable C# as committed - it opens, colors, and parses like ordinary code, marker and all -
+/// rather than needing a preprocessing step before it means anything. Parsing gives back the source
+/// without the markers plus the 1-based line/column pair the CLI wants, so a test case reads as
+/// source-in/source-out instead of hand-counted coordinates.
 /// </summary>
 record SelectionMarkup(string Source, int StartLine, int StartColumn, int EndLine, int EndColumn)
 {
-    const string StartMarker = "[|";
-    const string EndMarker = "|]";
+    const string StartMarker = "/*start*/";
+    const string EndMarker = "/*end*/";
 
     public static SelectionMarkup Parse(string markedSource)
     {
@@ -21,8 +24,9 @@ record SelectionMarkup(string Source, int StartLine, int StartColumn, int EndLin
         // Remove the end marker first, so the start marker's index is still valid for the second removal.
         var source = markedSource.Remove(end, EndMarker.Length).Remove(start, StartMarker.Length);
 
-        // In the marker-free source the selection starts where "[|" was, and ends two characters
-        // earlier than "|]" was, since removing "[|" shifted everything after it left.
+        // In the marker-free source the selection starts where the start marker was, and ends
+        // StartMarker.Length characters earlier than the end marker was, since removing the start
+        // marker shifted everything after it left.
         var text = SourceText.From(source);
         var startPosition = text.Lines.GetLinePosition(start);
         var endPosition = text.Lines.GetLinePosition(end - StartMarker.Length);

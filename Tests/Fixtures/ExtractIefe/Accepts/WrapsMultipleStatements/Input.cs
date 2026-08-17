@@ -5,7 +5,7 @@ class Program
     static void Main()
     {
         var greeting = "hello";
-        [|Console.WriteLine(greeting);
-        Console.WriteLine(greeting.Length);|]
+        /*start*/Console.WriteLine(greeting);
+        Console.WriteLine(greeting.Length);/*end*/
     }
 }

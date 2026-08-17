@@ -2,6 +2,6 @@ class Program
 {
     static void SetToOne(ref int value)
     {
-        [|value = 1;|]
+        /*start*/value = 1;/*end*/
     }
 }

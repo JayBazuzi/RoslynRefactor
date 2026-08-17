@@ -6,7 +6,7 @@ class Counter
 
     public void Bump()
     {
-        [|count++;
-        Console.WriteLine(count);|]
+        /*start*/count++;
+        Console.WriteLine(count);/*end*/
     }
 }

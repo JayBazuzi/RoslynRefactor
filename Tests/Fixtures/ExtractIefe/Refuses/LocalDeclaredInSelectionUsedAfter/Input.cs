@@ -4,7 +4,7 @@ class Program
 {
     static void Main()
     {
-        [|var doubled = 21 * 2;|]
+        /*start*/var doubled = 21 * 2;/*end*/
         Console.WriteLine(doubled);
     }
 }

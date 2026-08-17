@@ -5,7 +5,7 @@ class Program
     static void Main()
     {
         int total;
-        [|total = 21 * 2;|]
+        /*start*/total = 21 * 2;/*end*/
         Console.WriteLine(total);
     }
 }

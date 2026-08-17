@@ -5,7 +5,7 @@ class Program
 {
     static async Task Main()
     {
-        [|await Task.Delay(1);
-        Console.WriteLine("done");|]
+        /*start*/await Task.Delay(1);
+        Console.WriteLine("done");/*end*/
     }
 }
