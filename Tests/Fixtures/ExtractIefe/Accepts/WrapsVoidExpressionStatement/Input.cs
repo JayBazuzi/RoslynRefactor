@@ -4,6 +4,6 @@ class Program
 {
     static void Main()
     {
-        /*start*/Console.WriteLine("hello")/*end*/;
+        /*[*/Console.WriteLine("hello")/*]*/;
     }
 }

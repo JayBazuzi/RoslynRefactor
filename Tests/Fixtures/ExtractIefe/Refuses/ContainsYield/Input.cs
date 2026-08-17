@@ -4,7 +4,7 @@ class Program
 {
     static IEnumerable<int> Numbers()
     {
-        /*start*/yield return 1;
-        yield return 2;/*end*/
+        /*[*/yield return 1;
+        yield return 2;/*]*/
     }
 }

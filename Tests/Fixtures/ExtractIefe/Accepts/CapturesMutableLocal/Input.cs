@@ -5,8 +5,8 @@ class Program
     static void Main()
     {
         var total = 0;
-        /*start*/total += 1;
-        total *= 2;/*end*/
+        /*[*/total += 1;
+        total *= 2;/*]*/
         Console.WriteLine(total);
     }
 }

@@ -6,7 +6,7 @@ class Program
     {
         if (flag)
         {
-            /*start*/Console.WriteLine("nested");/*end*/
+            /*[*/Console.WriteLine("nested");/*]*/
         }
     }
 }

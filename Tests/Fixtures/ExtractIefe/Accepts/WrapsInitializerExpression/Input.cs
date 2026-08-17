@@ -4,7 +4,7 @@ class Program
 {
     static void Main()
     {
-        var doubled = /*start*/21 * 2/*end*/;
+        var doubled = /*[*/21 * 2/*]*/;
         Console.WriteLine(doubled);
     }
 }

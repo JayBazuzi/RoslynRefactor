@@ -3,8 +3,8 @@ using Microsoft.CodeAnalysis.Text;
 namespace RoslynRefactor.Tests;
 
 /// <summary>
-/// A test source that marks the selection to refactor with the block comments <c>/*start*/</c> ...
-/// <c>/*end*/</c>. Comments are legal C# anywhere whitespace is, so an Input.cs fixture is valid,
+/// A test source that marks the selection to refactor with the block comments <c>/*[*/</c> ...
+/// <c>/*]*/</c>. Comments are legal C# anywhere whitespace is, so an Input.cs fixture is valid,
 /// compilable C# as committed - it opens, colors, and parses like ordinary code, marker and all -
 /// rather than needing a preprocessing step before it means anything. Parsing gives back the source
 /// without the markers plus the 1-based line/column pair the CLI wants, so a test case reads as
@@ -12,8 +12,8 @@ namespace RoslynRefactor.Tests;
 /// </summary>
 record SelectionMarkup(string Source, int StartLine, int StartColumn, int EndLine, int EndColumn)
 {
-    const string StartMarker = "/*start*/";
-    const string EndMarker = "/*end*/";
+    const string StartMarker = "/*[*/";
+    const string EndMarker = "/*]*/";
 
     public static SelectionMarkup Parse(string markedSource)
     {
