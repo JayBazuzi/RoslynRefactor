@@ -45,16 +45,14 @@ sealed class InlineMethodCommand : ICommand
 
         if (document is null)
         {
-            Console.Error.WriteLine($"error: file not found in workspace: {fullFilePath}");
-            return 1;
+            throw new InvalidOperationException($"file not found in workspace: {fullFilePath}");
         }
 
         var text = await document.GetTextAsync(cancellationToken);
         var span = CommandSupport.ToSpan(text, startLine, startColumn, endLine, endColumn);
         if (span is null)
         {
-            Console.Error.WriteLine($"error: selection is out of range for {fullFilePath}");
-            return 1;
+            throw new InvalidOperationException($"selection is out of range for {fullFilePath}");
         }
 
         var actions = new List<CodeAction>();
@@ -68,13 +66,11 @@ sealed class InlineMethodCommand : ICommand
         var candidates = leaves.Where(a => a.Title.StartsWith("Inline '", StringComparison.Ordinal)).ToList();
         if (candidates.Count == 0)
         {
-            Console.Error.WriteLine("error: no Inline Method refactoring is available at this location.");
-            return 1;
+            throw new InvalidOperationException("no Inline Method refactoring is available at this location.");
         }
         if (candidates.Count > 1)
         {
-            Console.Error.WriteLine("error: multiple matching Inline Method refactorings were found; this is a bug in RoslynRefactor.");
-            return 1;
+            throw new InvalidOperationException("multiple matching Inline Method refactorings were found; this is a bug in RoslynRefactor.");
         }
 
         var inlineAction = candidates[0];
@@ -82,8 +78,7 @@ sealed class InlineMethodCommand : ICommand
         var applyOperation = operations.OfType<ApplyChangesOperation>().FirstOrDefault();
         if (applyOperation is null)
         {
-            Console.Error.WriteLine("error: Roslyn's Inline Method refactoring produced no changes.");
-            return 1;
+            throw new InvalidOperationException("Roslyn's Inline Method refactoring produced no changes.");
         }
 
         var newSolution = applyOperation.ChangedSolution;
@@ -92,8 +87,7 @@ sealed class InlineMethodCommand : ICommand
 
         if (!workspace.TryApplyChanges(newSolution))
         {
-            Console.Error.WriteLine("error: workspace rejected the changes");
-            return 1;
+            throw new InvalidOperationException("workspace rejected the changes");
         }
 
         Console.WriteLine($"updated: {fullFilePath}");

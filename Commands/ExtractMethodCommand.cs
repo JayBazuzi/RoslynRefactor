@@ -45,16 +45,14 @@ sealed class ExtractMethodCommand : ICommand
 
         if (document is null)
         {
-            Console.Error.WriteLine($"error: file not found in workspace: {fullFilePath}");
-            return 1;
+            throw new InvalidOperationException($"file not found in workspace: {fullFilePath}");
         }
 
         var text = await document.GetTextAsync(cancellationToken);
         var span = CommandSupport.ToSpan(text, startLine, startColumn, endLine, endColumn);
         if (span is null)
         {
-            Console.Error.WriteLine($"error: selection is out of range for {fullFilePath}");
-            return 1;
+            throw new InvalidOperationException($"selection is out of range for {fullFilePath}");
         }
 
         var actions = new List<CodeAction>();
@@ -64,16 +62,14 @@ sealed class ExtractMethodCommand : ICommand
         var extractMethodAction = CommandSupport.FindByEquivalenceKey(actions, "Extract_method");
         if (extractMethodAction is null)
         {
-            Console.Error.WriteLine("error: Roslyn's Extract Method refactoring is not available for this selection.");
-            return 1;
+            throw new InvalidOperationException("Roslyn's Extract Method refactoring is not available for this selection.");
         }
 
         var operations = await extractMethodAction.GetOperationsAsync(cancellationToken);
         var applyOperation = operations.OfType<ApplyChangesOperation>().FirstOrDefault();
         if (applyOperation is null)
         {
-            Console.Error.WriteLine("error: Roslyn's Extract Method refactoring produced no changes.");
-            return 1;
+            throw new InvalidOperationException("Roslyn's Extract Method refactoring produced no changes.");
         }
 
         var newSolution = applyOperation.ChangedSolution;
@@ -82,8 +78,7 @@ sealed class ExtractMethodCommand : ICommand
 
         if (!workspace.TryApplyChanges(newSolution))
         {
-            Console.Error.WriteLine("error: workspace rejected the changes");
-            return 1;
+            throw new InvalidOperationException("workspace rejected the changes");
         }
 
         Console.WriteLine($"updated: {fullFilePath}");

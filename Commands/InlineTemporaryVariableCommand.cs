@@ -45,16 +45,14 @@ sealed class InlineTemporaryVariableCommand : ICommand
 
         if (document is null)
         {
-            Console.Error.WriteLine($"error: file not found in workspace: {fullFilePath}");
-            return 1;
+            throw new InvalidOperationException($"file not found in workspace: {fullFilePath}");
         }
 
         var text = await document.GetTextAsync(cancellationToken);
         var span = CommandSupport.ToSpan(text, startLine, startColumn, endLine, endColumn);
         if (span is null)
         {
-            Console.Error.WriteLine($"error: selection is out of range for {fullFilePath}");
-            return 1;
+            throw new InvalidOperationException($"selection is out of range for {fullFilePath}");
         }
 
         var actions = new List<CodeAction>();
@@ -65,13 +63,11 @@ sealed class InlineTemporaryVariableCommand : ICommand
 
         if (leaves.Count == 0)
         {
-            Console.Error.WriteLine("error: no Inline Temporary Variable refactoring is available for this selection.");
-            return 1;
+            throw new InvalidOperationException("no Inline Temporary Variable refactoring is available for this selection.");
         }
         if (leaves.Count > 1)
         {
-            Console.Error.WriteLine("error: multiple matching Inline Temporary Variable refactorings were found; this is a bug in RoslynRefactor.");
-            return 1;
+            throw new InvalidOperationException("multiple matching Inline Temporary Variable refactorings were found; this is a bug in RoslynRefactor.");
         }
 
         var inlineAction = leaves[0];
@@ -79,8 +75,7 @@ sealed class InlineTemporaryVariableCommand : ICommand
         var applyOperation = operations.OfType<ApplyChangesOperation>().FirstOrDefault();
         if (applyOperation is null)
         {
-            Console.Error.WriteLine("error: Roslyn's Inline Temporary Variable refactoring produced no changes.");
-            return 1;
+            throw new InvalidOperationException("Roslyn's Inline Temporary Variable refactoring produced no changes.");
         }
 
         var newSolution = applyOperation.ChangedSolution;
@@ -89,8 +84,7 @@ sealed class InlineTemporaryVariableCommand : ICommand
 
         if (!workspace.TryApplyChanges(newSolution))
         {
-            Console.Error.WriteLine("error: workspace rejected the changes");
-            return 1;
+            throw new InvalidOperationException("workspace rejected the changes");
         }
 
         Console.WriteLine($"updated: {fullFilePath}");

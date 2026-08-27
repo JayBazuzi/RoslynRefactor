@@ -1,3 +1,5 @@
+using System.CommandLine;
+
 namespace RoslynRefactor;
 
 static class CommandLine
@@ -8,7 +10,7 @@ static class CommandLine
 
         try
         {
-            return await root.Parse(args).InvokeAsync();
+            return await root.Parse(args).InvokeAsync(new InvocationConfiguration { EnableDefaultExceptionHandler = false });
         }
         catch (Exception ex)
         {

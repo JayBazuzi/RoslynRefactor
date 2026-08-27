@@ -45,16 +45,14 @@ sealed class IntroduceVariableCommand : ICommand
 
         if (document is null)
         {
-            Console.Error.WriteLine($"error: file not found in workspace: {fullFilePath}");
-            return 1;
+            throw new InvalidOperationException($"file not found in workspace: {fullFilePath}");
         }
 
         var text = await document.GetTextAsync(cancellationToken);
         var span = CommandSupport.ToSpan(text, startLine, startColumn, endLine, endColumn);
         if (span is null)
         {
-            Console.Error.WriteLine($"error: selection is out of range for {fullFilePath}");
-            return 1;
+            throw new InvalidOperationException($"selection is out of range for {fullFilePath}");
         }
 
         var actions = new List<CodeAction>();
@@ -66,13 +64,11 @@ sealed class IntroduceVariableCommand : ICommand
         var candidates = leaves.Where(a => MatchesKindAndScope(a.Title)).ToList();
         if (candidates.Count == 0)
         {
-            Console.Error.WriteLine("error: no 'local' (single occurrence) Introduce Variable refactoring is available for this selection.");
-            return 1;
+            throw new InvalidOperationException("no 'local' (single occurrence) Introduce Variable refactoring is available for this selection.");
         }
         if (candidates.Count > 1)
         {
-            Console.Error.WriteLine("error: multiple matching Introduce Variable refactorings were found; this is a bug in RoslynRefactor.");
-            return 1;
+            throw new InvalidOperationException("multiple matching Introduce Variable refactorings were found; this is a bug in RoslynRefactor.");
         }
 
         var introduceAction = candidates[0];
@@ -80,8 +76,7 @@ sealed class IntroduceVariableCommand : ICommand
         var applyOperation = operations.OfType<ApplyChangesOperation>().FirstOrDefault();
         if (applyOperation is null)
         {
-            Console.Error.WriteLine("error: Roslyn's Introduce Variable refactoring produced no changes.");
-            return 1;
+            throw new InvalidOperationException("Roslyn's Introduce Variable refactoring produced no changes.");
         }
 
         var newSolution = applyOperation.ChangedSolution;
@@ -90,8 +85,7 @@ sealed class IntroduceVariableCommand : ICommand
 
         if (!workspace.TryApplyChanges(newSolution))
         {
-            Console.Error.WriteLine("error: workspace rejected the changes");
-            return 1;
+            throw new InvalidOperationException("workspace rejected the changes");
         }
 
         Console.WriteLine($"updated: {fullFilePath}");

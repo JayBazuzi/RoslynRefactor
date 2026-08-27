@@ -42,8 +42,7 @@ sealed class RenameCommand : ICommand
 
         if (document is null)
         {
-            Console.Error.WriteLine($"error: file not found in workspace: {fullFilePath}");
-            return 1;
+            throw new InvalidOperationException($"file not found in workspace: {fullFilePath}");
         }
 
         var text = await document.GetTextAsync(cancellationToken);
@@ -51,8 +50,7 @@ sealed class RenameCommand : ICommand
         var linePosition = new LinePosition(line - 1, column - 1);
         if (linePosition.Line < 0 || linePosition.Line >= text.Lines.Count)
         {
-            Console.Error.WriteLine($"error: line {line} is out of range for {fullFilePath}");
-            return 1;
+            throw new InvalidOperationException($"line {line} is out of range for {fullFilePath}");
         }
         var position = text.Lines[linePosition.Line].Start + linePosition.Character;
 
@@ -62,8 +60,7 @@ sealed class RenameCommand : ICommand
         var symbol = await SymbolFinder.FindSymbolAtPositionAsync(semanticModel, position, solution.Workspace, cancellationToken: cancellationToken);
         if (symbol is null)
         {
-            Console.Error.WriteLine($"error: no symbol found at {fullFilePath}:{line}:{column}");
-            return 1;
+            throw new InvalidOperationException($"no symbol found at {fullFilePath}:{line}:{column}");
         }
 
         Console.WriteLine($"Renaming '{symbol.Name}' ({symbol.Kind}) -> '{newName}'");
@@ -91,8 +88,7 @@ sealed class RenameCommand : ICommand
 
         if (!workspace.TryApplyChanges(newSolution))
         {
-            Console.Error.WriteLine("error: workspace rejected the changes");
-            return 1;
+            throw new InvalidOperationException("workspace rejected the changes");
         }
 
         Console.WriteLine($"{changedDocuments.Count} file(s) updated.");
