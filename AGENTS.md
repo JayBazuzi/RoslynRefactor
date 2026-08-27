@@ -1,6 +1,6 @@
 ## REFACTORING
 
-Strongly prefer to use the refactoring tool rather than editing files. You can find it at `dotnet run --project . -- {COMMAND} {OPTIONS}`.
+Strongly prefer to use the refactoring tool rather than editing files. It is available as MCP tools (one per command below); use those instead of shelling out. If MCP tools aren't available, fall back to `dotnet run --project . -- {COMMAND} {OPTIONS}`.
 
 <!-- include: Tests/_approvals/RoslynRefactorRootCommandTests.ApproveIndexOfAvailableCommands.approved.md -->
 | Command | Description |
