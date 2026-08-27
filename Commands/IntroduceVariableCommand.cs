@@ -21,69 +21,18 @@ sealed class IntroduceVariableCommand : ICommand
         ],
         RunAsync);
 
-    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, TextWriter output, CancellationToken cancellationToken)
-    {
-        var projectPath = arguments["project"];
-        var filePath = arguments["file"];
-        var startLine = int.Parse(arguments["start-line"]);
-        var startColumn = int.Parse(arguments["start-column"]);
-        var endLine = int.Parse(arguments["end-line"]);
-        var endColumn = int.Parse(arguments["end-column"]);
-
-        var (workspace, solution) = await WorkspaceLoader.OpenAsync(projectPath);
-        using var _ = workspace;
-
-        var fullFilePath = Path.GetFullPath(filePath);
-        var document = CommandSupport.FindDocument(solution, fullFilePath);
-
-        if (document is null)
-        {
-            throw new InvalidOperationException($"file not found in workspace: {fullFilePath}");
-        }
-
-        var text = await document.GetTextAsync(cancellationToken);
-        var span = CommandSupport.ToSpan(text, startLine, startColumn, endLine, endColumn);
-        if (span is null)
-        {
-            throw new InvalidOperationException($"selection is out of range for {fullFilePath}");
-        }
-
-        var actions = new List<CodeAction>();
-        var context = new CodeRefactoringContext(document, span.Value, actions.Add, cancellationToken);
-        await Provider.Value.ComputeRefactoringsAsync(context);
-
-        var leaves = CommandSupport.CollectLeaves(actions).ToList();
-
-        var candidates = leaves.Where(a => MatchesKindAndScope(a.Title)).ToList();
-        if (candidates.Count == 0)
-        {
-            throw new InvalidOperationException("no 'local' (single occurrence) Introduce Variable refactoring is available for this selection.");
-        }
-        if (candidates.Count > 1)
-        {
-            throw new InvalidOperationException("multiple matching Introduce Variable refactorings were found; this is a bug in RoslynRefactor.");
-        }
-
-        var introduceAction = candidates[0];
-        var operations = await introduceAction.GetOperationsAsync(cancellationToken);
-        var applyOperation = operations.OfType<ApplyChangesOperation>().FirstOrDefault();
-        if (applyOperation is null)
-        {
-            throw new InvalidOperationException("Roslyn's Introduce Variable refactoring produced no changes.");
-        }
-
-        var newSolution = applyOperation.ChangedSolution;
-
-        output.WriteLine($"Introducing variable ({fullFilePath})");
-
-        if (!workspace.TryApplyChanges(newSolution))
-        {
-            throw new InvalidOperationException("workspace rejected the changes");
-        }
-
-        output.WriteLine($"updated: {fullFilePath}");
-        return 0;
-    }
+    static Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, TextWriter output, CancellationToken cancellationToken) =>
+        CommandSupport.RunSpanRefactoringAsync(
+            arguments,
+            Provider.Value,
+            actions => CommandSupport.SelectSingle(
+                CommandSupport.CollectLeaves(actions).Where(a => MatchesKindAndScope(a.Title)).ToList(),
+                "no 'local' (single occurrence) Introduce Variable refactoring is available for this selection.",
+                "multiple matching Introduce Variable refactorings were found; this is a bug in RoslynRefactor."),
+            "Introducing variable",
+            "Roslyn's Introduce Variable refactoring produced no changes.",
+            output,
+            cancellationToken);
 
     static bool MatchesKindAndScope(string title)
     {
