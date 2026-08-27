@@ -62,21 +62,15 @@ static class CommandSupport
 
     public static CodeAction? FindByEquivalenceKey(IEnumerable<CodeAction> actions, string equivalenceKey)
     {
-        foreach (var action in actions)
+        var match = actions.FirstOrDefault(action => string.Equals(action.EquivalenceKey, equivalenceKey, StringComparison.Ordinal));
+        if (match is not null)
         {
-            if (string.Equals(action.EquivalenceKey, equivalenceKey, StringComparison.Ordinal))
-            {
-                return action;
-            }
-
-            var nested = FindByEquivalenceKey(action.NestedActions, equivalenceKey);
-            if (nested is not null)
-            {
-                return nested;
-            }
+            return match;
         }
 
-        return null;
+        return actions
+            .Select(action => FindByEquivalenceKey(action.NestedActions, equivalenceKey))
+            .FirstOrDefault(nested => nested is not null);
     }
 
     public static IEnumerable<CodeAction> CollectLeaves(IEnumerable<CodeAction> actions)
