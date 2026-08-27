@@ -26,11 +26,17 @@ static class ProcessTestHost
 
     public static async Task<ProcessResult> RunAsync(params string[] args)
     {
+        var result = await RunAllowingFailureAsync(args);
+        Assert.Equal(0, result.ExitCode);
+        return result;
+    }
+
+    public static async Task<ProcessResult> RunAllowingFailureAsync(params string[] args)
+    {
         ProcessStartInfo psi = CreateRoslynRefactorProcessStartInfo(args); using var process = Process.Start(psi)!;
         var stdoutTask = process.StandardOutput.ReadToEndAsync();
         var stderrTask = process.StandardError.ReadToEndAsync();
         await process.WaitForExitAsync();
-        Assert.Equal(0, process.ExitCode);
 
         return new ProcessResult(process.ExitCode, await stdoutTask, await stderrTask);
     }

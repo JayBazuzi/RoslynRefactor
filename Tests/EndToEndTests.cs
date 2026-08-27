@@ -89,6 +89,21 @@ public class EndToEndTests
     }
 
     [Fact]
+    public async Task Rename_fails_when_the_new_name_collides_with_an_existing_symbol_in_scope()
+    {
+        var sample = ProcessTestHost.CreateSampleCopy();
+
+        var result = await ProcessTestHost.RunAllowingFailureAsync(
+            "rename",
+            "--project", sample.SolutionPath,
+            "--file", sample.ProgramFilePath,
+            "--line", "16", "--column", "13",
+            "--to", "widgets");
+
+        Assert.NotEqual(0, result.ExitCode);
+    }
+
+    [Fact]
     public async Task ConvertToLinqCallForm_converts_the_foreach_loop()
     {
         var sample = ProcessTestHost.CreateSampleCopy();

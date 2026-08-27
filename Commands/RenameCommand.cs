@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Rename;
@@ -59,6 +60,18 @@ sealed class RenameCommand : ICommand
         output.WriteLine($"Renaming '{symbol.Name}' ({symbol.Kind}) -> '{newName}'");
 
         var options = new SymbolRenameOptions();
+
+        var conflicts = await RenameConflictDetector.FindConflictsAsync(symbol, solution, newName, options, cancellationToken);
+        if (conflicts.Count > 0)
+        {
+            output.WriteLine("Rename introduces conflicts:");
+            foreach (var conflict in conflicts)
+            {
+                output.WriteLine($"  {conflict}");
+            }
+            return 1;
+        }
+
         var newSolution = await Renamer.RenameSymbolAsync(solution, symbol, options, newName, cancellationToken);
 
         var changes = newSolution.GetChanges(solution);
@@ -86,5 +99,86 @@ sealed class RenameCommand : ICommand
 
         output.WriteLine($"{changedDocuments.Count} file(s) updated.");
         return 0;
+    }
+}
+
+// Renamer.RenameSymbolAsync's public API silently applies renames even when the new name
+// collides with another symbol in scope: it only exposes the resulting Solution, with no way to
+// ask whether the rename was actually conflict-free. The conflict information does exist, but
+// only in Roslyn's internal ConflictEngine (Microsoft.CodeAnalysis.Rename.ConflictResolution /
+// ConflictEngine.RelatedLocation), so we reach it via reflection.
+static class RenameConflictDetector
+{
+    static readonly Assembly WorkspacesAssembly = typeof(Renamer).Assembly;
+
+    static readonly Type SymbolicRenameLocationsType =
+        WorkspacesAssembly.GetType("Microsoft.CodeAnalysis.Rename.SymbolicRenameLocations", throwOnError: true)!;
+
+    static readonly MethodInfo FindLocationsMethod =
+        SymbolicRenameLocationsType.GetMethod(
+            "FindLocationsInCurrentProcessAsync",
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!;
+
+    static readonly Type ConflictResolverType =
+        WorkspacesAssembly.GetType("Microsoft.CodeAnalysis.Rename.ConflictEngine.ConflictResolver", throwOnError: true)!;
+
+    static readonly MethodInfo ResolveConflictsMethod =
+        ConflictResolverType.GetMethod(
+            "ResolveSymbolicLocationConflictsInCurrentProcessAsync",
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!;
+
+    static readonly Type RelatedLocationType =
+        WorkspacesAssembly.GetType("Microsoft.CodeAnalysis.Rename.ConflictEngine.RelatedLocation", throwOnError: true)!;
+
+    static readonly PropertyInfo RelatedLocationTypeProperty =
+        RelatedLocationType.GetProperty("Type", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+    static readonly PropertyInfo RelatedLocationDocumentIdProperty =
+        RelatedLocationType.GetProperty("DocumentId", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+    static readonly PropertyInfo RelatedLocationConflictCheckSpanProperty =
+        RelatedLocationType.GetProperty("ConflictCheckSpan", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+    public static async Task<IReadOnlyList<string>> FindConflictsAsync(
+        ISymbol symbol, Solution solution, string newName, SymbolRenameOptions options, CancellationToken cancellationToken)
+    {
+        var renameLocationsTask = (Task)FindLocationsMethod.Invoke(null, [symbol, solution, options, cancellationToken])!;
+        await renameLocationsTask.ConfigureAwait(false);
+        var renameLocations = renameLocationsTask.GetType().GetProperty("Result")!.GetValue(renameLocationsTask)!;
+
+        var conflictResolutionTask = (Task)ResolveConflictsMethod.Invoke(null, [renameLocations, newName, cancellationToken])!;
+        await conflictResolutionTask.ConfigureAwait(false);
+        var conflictResolution = conflictResolutionTask.GetType().GetProperty("Result")!.GetValue(conflictResolutionTask)!;
+
+        var relatedLocations = (System.Collections.IEnumerable)conflictResolution.GetType()
+            .GetField("RelatedLocations", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(conflictResolution)!;
+
+        var newSolution = (Solution)conflictResolution.GetType()
+            .GetField("NewSolution", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(conflictResolution)!;
+
+        var conflicts = new List<string>();
+        foreach (var relatedLocation in relatedLocations)
+        {
+            var type = RelatedLocationTypeProperty.GetValue(relatedLocation)!.ToString();
+            if (type is not ("UnresolvedConflict" or "UnresolvableConflict"))
+            {
+                continue;
+            }
+
+            var documentId = (DocumentId)RelatedLocationDocumentIdProperty.GetValue(relatedLocation)!;
+            var span = (TextSpan)RelatedLocationConflictCheckSpanProperty.GetValue(relatedLocation)!;
+            var document = newSolution.GetDocument(documentId);
+            LinePositionSpan? lineSpan = document is null
+                ? null
+                : (await document.GetTextAsync(cancellationToken).ConfigureAwait(false)).Lines.GetLinePositionSpan(span);
+
+            conflicts.Add(lineSpan is { } ls
+                ? $"{type} at {document!.FilePath}:{ls.Start.Line + 1}:{ls.Start.Character + 1}"
+                : $"{type} in {documentId}");
+        }
+
+        return conflicts;
     }
 }
