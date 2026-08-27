@@ -21,7 +21,7 @@ sealed class InlineTemporaryVariableCommand : ICommand
         ],
         RunAsync);
 
-    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, CancellationToken cancellationToken)
+    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, TextWriter output, CancellationToken cancellationToken)
     {
         var projectPath = arguments["project"];
         var filePath = arguments["file"];
@@ -73,14 +73,14 @@ sealed class InlineTemporaryVariableCommand : ICommand
 
         var newSolution = applyOperation.ChangedSolution;
 
-        Console.WriteLine($"Inlining temporary variable ({fullFilePath})");
+        output.WriteLine($"Inlining temporary variable ({fullFilePath})");
 
         if (!workspace.TryApplyChanges(newSolution))
         {
             throw new InvalidOperationException("workspace rejected the changes");
         }
 
-        Console.WriteLine($"updated: {fullFilePath}");
+        output.WriteLine($"updated: {fullFilePath}");
         return 0;
     }
 }

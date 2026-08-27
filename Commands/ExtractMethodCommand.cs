@@ -21,7 +21,7 @@ sealed class ExtractMethodCommand : ICommand
         ],
         RunAsync);
 
-    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, CancellationToken cancellationToken)
+    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, TextWriter output, CancellationToken cancellationToken)
     {
         var projectPath = arguments["project"];
         var filePath = arguments["file"];
@@ -67,14 +67,14 @@ sealed class ExtractMethodCommand : ICommand
 
         var newSolution = applyOperation.ChangedSolution;
 
-        Console.WriteLine($"Extracting selection into a new method ({fullFilePath})");
+        output.WriteLine($"Extracting selection into a new method ({fullFilePath})");
 
         if (!workspace.TryApplyChanges(newSolution))
         {
             throw new InvalidOperationException("workspace rejected the changes");
         }
 
-        Console.WriteLine($"updated: {fullFilePath}");
+        output.WriteLine($"updated: {fullFilePath}");
         return 0;
     }
 }

@@ -9,12 +9,13 @@ sealed record CommandParameter(string Name, string Description, bool Required = 
 
 // Everything needed to expose a refactoring as a command, independent of how it's invoked.
 // Arguments are always passed as strings, keyed by CommandParameter.Name; ExecuteAsync parses
-// them itself (e.g. int.Parse for line/column parameters).
+// them itself (e.g. int.Parse for line/column parameters). Progress/result text goes to the
+// supplied TextWriter rather than Console, so the command has no notion of CLI or MCP.
 sealed record CommandDescriptor(
     string Name,
     string Description,
     IReadOnlyList<CommandParameter> Parameters,
-    Func<IReadOnlyDictionary<string, string>, CancellationToken, Task<int>> ExecuteAsync);
+    Func<IReadOnlyDictionary<string, string>, TextWriter, CancellationToken, Task<int>> ExecuteAsync);
 
 interface ICommand
 {

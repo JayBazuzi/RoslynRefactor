@@ -19,7 +19,7 @@ static class CliCommandAdapter
         command.SetAction(async (parseResult, cancellationToken) =>
         {
             var arguments = getters.ToDictionary(g => g.Name, g => g.GetValue(parseResult));
-            return await descriptor.ExecuteAsync(arguments, cancellationToken);
+            return await descriptor.ExecuteAsync(arguments, Console.Out, cancellationToken);
         });
 
         return command;

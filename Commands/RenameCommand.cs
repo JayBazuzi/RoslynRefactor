@@ -19,7 +19,7 @@ sealed class RenameCommand : ICommand
         ],
         RunAsync);
 
-    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, CancellationToken cancellationToken)
+    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, TextWriter output, CancellationToken cancellationToken)
     {
         var projectPath = arguments["project"];
         var filePath = arguments["file"];
@@ -56,7 +56,7 @@ sealed class RenameCommand : ICommand
             throw new InvalidOperationException($"no symbol found at {fullFilePath}:{line}:{column}");
         }
 
-        Console.WriteLine($"Renaming '{symbol.Name}' ({symbol.Kind}) -> '{newName}'");
+        output.WriteLine($"Renaming '{symbol.Name}' ({symbol.Kind}) -> '{newName}'");
 
         var options = new SymbolRenameOptions();
         var newSolution = await Renamer.RenameSymbolAsync(solution, symbol, options, newName, cancellationToken);
@@ -68,14 +68,14 @@ sealed class RenameCommand : ICommand
 
         if (changedDocuments.Count == 0)
         {
-            Console.WriteLine("No changes produced.");
+            output.WriteLine("No changes produced.");
             return 0;
         }
 
         foreach (var docId in changedDocuments)
         {
             var doc = newSolution.GetDocument(docId)!;
-            Console.WriteLine($"updating: {doc.FilePath}");
+            output.WriteLine($"updating: {doc.FilePath}");
         }
 
 
@@ -84,7 +84,7 @@ sealed class RenameCommand : ICommand
             throw new InvalidOperationException("workspace rejected the changes");
         }
 
-        Console.WriteLine($"{changedDocuments.Count} file(s) updated.");
+        output.WriteLine($"{changedDocuments.Count} file(s) updated.");
         return 0;
     }
 }

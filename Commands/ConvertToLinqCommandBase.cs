@@ -19,9 +19,9 @@ abstract class ConvertToLinqCommandBase
             CommandSupport.FileParameter("Path to the file containing the selection"),
             .. CommandSupport.SpanParameters,
         ],
-        (arguments, cancellationToken) => RunAsync(arguments, equivalenceKey, cancellationToken));
+        (arguments, output, cancellationToken) => RunAsync(arguments, equivalenceKey, output, cancellationToken));
 
-    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, string equivalenceKey, CancellationToken cancellationToken)
+    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, string equivalenceKey, TextWriter output, CancellationToken cancellationToken)
     {
         var projectPath = arguments["project"];
         var filePath = arguments["file"];
@@ -67,14 +67,14 @@ abstract class ConvertToLinqCommandBase
 
         var newSolution = applyOperation.ChangedSolution;
 
-        Console.WriteLine($"Converting foreach to LINQ ({fullFilePath})");
+        output.WriteLine($"Converting foreach to LINQ ({fullFilePath})");
 
         if (!workspace.TryApplyChanges(newSolution))
         {
             throw new InvalidOperationException("workspace rejected the changes");
         }
 
-        Console.WriteLine($"updated: {fullFilePath}");
+        output.WriteLine($"updated: {fullFilePath}");
         return 0;
     }
 }

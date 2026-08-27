@@ -21,7 +21,7 @@ sealed class IntroduceVariableCommand : ICommand
         ],
         RunAsync);
 
-    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, CancellationToken cancellationToken)
+    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, TextWriter output, CancellationToken cancellationToken)
     {
         var projectPath = arguments["project"];
         var filePath = arguments["file"];
@@ -74,14 +74,14 @@ sealed class IntroduceVariableCommand : ICommand
 
         var newSolution = applyOperation.ChangedSolution;
 
-        Console.WriteLine($"Introducing variable ({fullFilePath})");
+        output.WriteLine($"Introducing variable ({fullFilePath})");
 
         if (!workspace.TryApplyChanges(newSolution))
         {
             throw new InvalidOperationException("workspace rejected the changes");
         }
 
-        Console.WriteLine($"updated: {fullFilePath}");
+        output.WriteLine($"updated: {fullFilePath}");
         return 0;
     }
 

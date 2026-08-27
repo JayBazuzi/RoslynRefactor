@@ -41,24 +41,15 @@ static class McpTools
                 .ToDictionary(p => p.Name, p => AsString(arguments[p.Name]));
 
             var writer = new StringWriter();
-            var previousOut = Console.Out;
-            var previousError = Console.Error;
-            Console.SetOut(writer);
-            Console.SetError(writer);
             int exitCode;
             try
             {
-                exitCode = await descriptor.ExecuteAsync(stringArguments, cancellationToken);
+                exitCode = await descriptor.ExecuteAsync(stringArguments, writer, cancellationToken);
             }
             catch (Exception ex)
             {
                 writer.WriteLine($"error: {ex.Message}");
                 exitCode = 1;
-            }
-            finally
-            {
-                Console.SetOut(previousOut);
-                Console.SetError(previousError);
             }
 
             return new CallToolResult
