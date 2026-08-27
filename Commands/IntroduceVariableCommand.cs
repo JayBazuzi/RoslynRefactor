@@ -61,8 +61,7 @@ sealed class IntroduceVariableCommand : ICommand
         var context = new CodeRefactoringContext(document, span.Value, actions.Add, cancellationToken);
         await Provider.Value.ComputeRefactoringsAsync(context);
 
-        var leaves = new List<CodeAction>();
-        CommandSupport.CollectLeaves(actions, leaves);
+        var leaves = CommandSupport.CollectLeaves(actions).ToList();
 
         var candidates = leaves.Where(a => MatchesKindAndScope(a.Title)).ToList();
         if (candidates.Count == 0)

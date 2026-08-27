@@ -82,19 +82,11 @@ static class CommandSupport
         return null;
     }
 
-    public static void CollectLeaves(IEnumerable<CodeAction> actions, List<CodeAction> leaves)
+    public static IEnumerable<CodeAction> CollectLeaves(IEnumerable<CodeAction> actions)
     {
-        foreach (var action in actions)
-        {
-            var nested = action.NestedActions;
-            if (nested.Length == 0)
-            {
-                leaves.Add(action);
-            }
-            else
-            {
-                CollectLeaves(nested, leaves);
-            }
-        }
+        return actions.SelectMany(action =>
+            action.NestedActions.Length == 0
+                ? [action]
+                : CollectLeaves(action.NestedActions));
     }
 }

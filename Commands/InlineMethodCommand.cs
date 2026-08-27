@@ -61,8 +61,7 @@ sealed class InlineMethodCommand : ICommand
         var context = new CodeRefactoringContext(document, span.Value, actions.Add, cancellationToken);
         await Provider.Value.ComputeRefactoringsAsync(context);
 
-        var leaves = new List<CodeAction>();
-        CommandSupport.CollectLeaves(actions, leaves);
+        var leaves = CommandSupport.CollectLeaves(actions).ToList();
 
         // Roslyn also offers "Inline and keep 'X'", which inlines the call but leaves the original method
         // declaration in place. We only want the variant that removes the original declaration.

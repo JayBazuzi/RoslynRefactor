@@ -61,8 +61,7 @@ sealed class InlineTemporaryVariableCommand : ICommand
         var context = new CodeRefactoringContext(document, span.Value, actions.Add, cancellationToken);
         await Provider.Value.ComputeRefactoringsAsync(context);
 
-        var leaves = new List<CodeAction>();
-        CommandSupport.CollectLeaves(actions, leaves);
+        var leaves = CommandSupport.CollectLeaves(actions).ToList();
 
         if (leaves.Count == 0)
         {
