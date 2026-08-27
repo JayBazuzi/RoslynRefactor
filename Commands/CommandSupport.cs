@@ -22,7 +22,7 @@ static class CommandSupport
         new("end-column", "1-based end column of the selection", ValueType: typeof(int)),
     ];
 
-    public static TextSpan? ToSpan(SourceText text, int startLine, int startColumn, int endLine, int endColumn)
+    public static TextSpan? ToTextSpan(SourceText text, int startLine, int startColumn, int endLine, int endColumn)
     {
         var start = new LinePosition(startLine - 1, startColumn - 1);
         var end = new LinePosition(endLine - 1, endColumn - 1);
@@ -129,7 +129,7 @@ static class CommandSupport
         }
 
         var text = await document.GetTextAsync(cancellationToken);
-        var span = ToSpan(text, startLine, startColumn, endLine, endColumn);
+        var span = ToTextSpan(text, startLine, startColumn, endLine, endColumn);
         if (span is null)
         {
             throw new InvalidOperationException($"selection is out of range for {fullFilePath}");

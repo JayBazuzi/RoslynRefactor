@@ -11,7 +11,7 @@ public class CommandSupportTests
     public void ToSpan_converts_1_based_line_and_column_to_a_TextSpan()
     {
         // "second" starts at offset 6 (after "first\n"); column 3 is 2 chars in -> offset 8.
-        var span = CommandSupport.ToSpan(Text, startLine: 2, startColumn: 3, endLine: 2, endColumn: 6);
+        var span = CommandSupport.ToTextSpan(Text, startLine: 2, startColumn: 3, endLine: 2, endColumn: 6);
 
         Assert.NotNull(span);
         Assert.Equal("con", Text.ToString(span.Value));
@@ -22,7 +22,7 @@ public class CommandSupportTests
     [InlineData(10, 1, 10, 1)] // start line beyond range
     public void ToSpan_returns_null_when_a_line_is_out_of_range(int startLine, int startColumn, int endLine, int endColumn)
     {
-        var span = CommandSupport.ToSpan(Text, startLine, startColumn, endLine, endColumn);
+        var span = CommandSupport.ToTextSpan(Text, startLine, startColumn, endLine, endColumn);
 
         Assert.Null(span);
     }
@@ -30,7 +30,7 @@ public class CommandSupportTests
     [Fact]
     public void ToSpan_returns_null_when_the_end_position_precedes_the_start_position()
     {
-        var span = CommandSupport.ToSpan(Text, startLine: 2, startColumn: 5, endLine: 2, endColumn: 3);
+        var span = CommandSupport.ToTextSpan(Text, startLine: 2, startColumn: 5, endLine: 2, endColumn: 3);
 
         Assert.Null(span);
     }
