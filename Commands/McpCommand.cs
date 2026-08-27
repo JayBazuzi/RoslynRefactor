@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace RoslynRefactor;
 
-sealed class McpCommand : ICommand
+sealed class McpCommand
 {
     public const string Name = "mcp";
 

@@ -1,4 +1,3 @@
-using System.CommandLine;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using ModelContextProtocol.Protocol;
@@ -6,29 +5,27 @@ using ModelContextProtocol.Server;
 
 namespace RoslynRefactor;
 
-// Exposes every RoslynRefactor CLI command as an MCP tool, driven entirely by the System.CommandLine
-// Command/Option definitions those commands already declare. Adding a new ICommand to
-// RoslynRefactorRootCommand automatically gets it an MCP tool with no changes needed here.
+// Exposes every RoslynRefactor CommandDescriptor as an MCP tool. Adding a new ICommand to
+// RoslynRefactorRootCommand.RefactorDescriptors automatically gets it an MCP tool with no changes needed here.
 static class McpTools
 {
     public static IEnumerable<McpServerTool> CreateAll() =>
-        RoslynRefactorRootCommand.RefactorSubCommands.Values
-            .Select(CommandLineTool.Create);
+        RoslynRefactorRootCommand.RefactorDescriptors.Select(DescriptorTool.Create);
 
-    sealed class CommandLineTool : McpServerTool
+    sealed class DescriptorTool : McpServerTool
     {
-        readonly Command command;
+        readonly CommandDescriptor descriptor;
 
-        public static CommandLineTool Create(Command command) => new(command);
+        public static DescriptorTool Create(CommandDescriptor descriptor) => new(descriptor);
 
-        public CommandLineTool(Command command)
+        public DescriptorTool(CommandDescriptor descriptor)
         {
-            this.command = command;
+            this.descriptor = descriptor;
             ProtocolTool = new Tool
             {
-                Name = command.Name,
-                Description = command.Description,
-                InputSchema = BuildInputSchema(command).Deserialize<JsonElement>(),
+                Name = descriptor.Name,
+                Description = descriptor.Description,
+                InputSchema = BuildInputSchema(descriptor).Deserialize<JsonElement>(),
             };
         }
 
@@ -39,62 +36,57 @@ static class McpTools
             RequestContext<CallToolRequestParams> request, CancellationToken cancellationToken)
         {
             var arguments = request.Params?.Arguments ?? new Dictionary<string, JsonElement>();
-            var args = new List<string> { command.Name };
-            foreach (var option in command.Options)
-            {
-                if (!arguments.TryGetValue(OptionKey(option), out var value))
-                {
-                    continue;
-                }
+            var stringArguments = descriptor.Parameters
+                .Where(p => arguments.ContainsKey(p.Name))
+                .ToDictionary(p => p.Name, p => AsString(arguments[p.Name]));
 
-                args.Add(option.Name);
-                args.Add(value.ValueKind == JsonValueKind.String ? value.GetString()! : value.ToString());
-            }
-
-            var (exitCode, output) = await InvokeCliAsync(args.ToArray(), cancellationToken);
-
-            return new CallToolResult
-            {
-                IsError = exitCode != 0,
-                Content = [new TextContentBlock { Text = output }],
-            };
-        }
-
-        static async Task<(int ExitCode, string Output)> InvokeCliAsync(string[] args, CancellationToken cancellationToken)
-        {
             var writer = new StringWriter();
             var previousOut = Console.Out;
             var previousError = Console.Error;
             Console.SetOut(writer);
             Console.SetError(writer);
+            int exitCode;
             try
             {
-                var exitCode = await new RoslynRefactorRootCommand().Parse(args).InvokeAsync(configuration: null, cancellationToken);
-                return (exitCode, writer.ToString());
+                exitCode = await descriptor.ExecuteAsync(stringArguments, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                writer.WriteLine($"error: {ex.Message}");
+                exitCode = 1;
             }
             finally
             {
                 Console.SetOut(previousOut);
                 Console.SetError(previousError);
             }
+
+            return new CallToolResult
+            {
+                IsError = exitCode != 0,
+                Content = [new TextContentBlock { Text = writer.ToString() }],
+            };
         }
 
-        static JsonNode BuildInputSchema(Command command)
+        static string AsString(JsonElement value) =>
+            value.ValueKind == JsonValueKind.String ? value.GetString()! : value.ToString();
+
+        static JsonNode BuildInputSchema(CommandDescriptor descriptor)
         {
             var properties = new JsonObject();
             var required = new JsonArray();
 
-            foreach (var option in command.Options)
+            foreach (var parameter in descriptor.Parameters)
             {
-                properties[OptionKey(option)] = new JsonObject
+                properties[parameter.Name] = new JsonObject
                 {
-                    ["type"] = option.ValueType == typeof(int) ? "integer" : "string",
-                    ["description"] = option.Description,
+                    ["type"] = parameter.ValueType == typeof(int) ? "integer" : "string",
+                    ["description"] = parameter.Description,
                 };
 
-                if (option.Required)
+                if (parameter.Required)
                 {
-                    required.Add(OptionKey(option));
+                    required.Add(parameter.Name);
                 }
             }
 
@@ -105,7 +97,5 @@ static class McpTools
                 ["required"] = required,
             };
         }
-
-        static string OptionKey(Option option) => option.Name.TrimStart('-');
     }
 }

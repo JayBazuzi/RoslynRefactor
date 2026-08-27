@@ -1,4 +1,3 @@
-using System.CommandLine;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Rename;
@@ -8,34 +7,26 @@ namespace RoslynRefactor;
 
 sealed class RenameCommand : ICommand
 {
-    internal static readonly string Name = "rename";
+    public static CommandDescriptor Descriptor { get; } = new(
+        "rename",
+        "Rename a symbol across a solution/project",
+        [
+            CommandSupport.ProjectParameter,
+            CommandSupport.FileParameter("Path to the file containing the symbol"),
+            new("line", "1-based line of the symbol", ValueType: typeof(int)),
+            new("column", "1-based column of the symbol", ValueType: typeof(int)),
+            new("to", "The new name for the symbol"),
+        ],
+        RunAsync);
 
-    public static Command Build()
+    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, CancellationToken cancellationToken)
     {
-        var project = CommandSupport.ProjectOption();
-        var file = CommandSupport.FileOption("Path to the file containing the symbol");
-        var line = new Option<int>("--line") { Required = true, Description = "1-based line of the symbol" };
-        var column = new Option<int>("--column") { Required = true, Description = "1-based column of the symbol" };
-        var to = new Option<string>("--to") { Required = true, Description = "The new name for the symbol" };
+        var projectPath = arguments["project"];
+        var filePath = arguments["file"];
+        var line = int.Parse(arguments["line"]);
+        var column = int.Parse(arguments["column"]);
+        var newName = arguments["to"];
 
-        var command = new Command(Name, "Rename a symbol across a solution/project")
-        {
-            project, file, line, column, to,
-        };
-
-        command.SetAction(async (parseResult, cancellationToken) => await RunAsync(
-            parseResult.GetValue(project)!,
-            parseResult.GetValue(file)!,
-            parseResult.GetValue(line),
-            parseResult.GetValue(column),
-            parseResult.GetValue(to)!,
-            cancellationToken));
-
-        return command;
-    }
-
-    static async Task<int> RunAsync(string projectPath, string filePath, int line, int column, string newName, CancellationToken cancellationToken)
-    {
         var (workspace, solution) = await WorkspaceLoader.OpenAsync(projectPath);
         using var _ = workspace;
 

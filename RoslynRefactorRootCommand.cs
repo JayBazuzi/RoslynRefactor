@@ -10,15 +10,17 @@ sealed class RoslynRefactorRootCommand : RootCommand
         Add(McpCommand.Build());
     }
 
-    public static readonly Dictionary<string, Command> RefactorSubCommands = new Dictionary<string, Command>
-    {
-        [RenameCommand.Name] = RenameCommand.Build(),
-        [ExtractMethodCommand.Name] = ExtractMethodCommand.Build(),
-        [IntroduceVariableCommand.Name] = IntroduceVariableCommand.Build(),
-        [InlineTemporaryVariableCommand.Name] = InlineTemporaryVariableCommand.Build(),
-        [InlineMethodCommand.Name] = InlineMethodCommand.Build(),
-        [ConvertToLinqCallFormCommand.Name] = ConvertToLinqCallFormCommand.Build(),
-        [ConvertToLinqQueryFormCommand.Name] = ConvertToLinqQueryFormCommand.Build(),
-        [McpCommand.Name] = McpCommand.Build(),
-    };
+    public static readonly IReadOnlyList<CommandDescriptor> RefactorDescriptors =
+    [
+        RenameCommand.Descriptor,
+        ExtractMethodCommand.Descriptor,
+        IntroduceVariableCommand.Descriptor,
+        InlineTemporaryVariableCommand.Descriptor,
+        InlineMethodCommand.Descriptor,
+        ConvertToLinqCallFormCommand.Descriptor,
+        ConvertToLinqQueryFormCommand.Descriptor,
+    ];
+
+    public static readonly Dictionary<string, Command> RefactorSubCommands =
+        RefactorDescriptors.ToDictionary(d => d.Name, CliCommandAdapter.Build);
 }

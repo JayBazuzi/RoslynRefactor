@@ -1,4 +1,3 @@
-using System.CommandLine;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
@@ -8,37 +7,29 @@ namespace RoslynRefactor;
 
 sealed class ExtractMethodCommand : ICommand
 {
-    internal static readonly string Name = "extract-method";
-
     static readonly Lazy<CodeRefactoringProvider> Provider = new(() =>
         CommandSupport.LoadInternalProvider(
             "Microsoft.CodeAnalysis.CodeRefactorings.ExtractMethod.ExtractMethodCodeRefactoringProvider"));
 
-    public static Command Build()
+    public static CommandDescriptor Descriptor { get; } = new(
+        "extract-method",
+        "Extract selected statements into a new method",
+        [
+            CommandSupport.ProjectParameter,
+            CommandSupport.FileParameter("Path to the file containing the selection"),
+            .. CommandSupport.SpanParameters,
+        ],
+        RunAsync);
+
+    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, CancellationToken cancellationToken)
     {
-        var project = CommandSupport.ProjectOption();
-        var file = CommandSupport.FileOption("Path to the file containing the selection");
-        var span = new CommandSupport.SpanOptions();
+        var projectPath = arguments["project"];
+        var filePath = arguments["file"];
+        var startLine = int.Parse(arguments["start-line"]);
+        var startColumn = int.Parse(arguments["start-column"]);
+        var endLine = int.Parse(arguments["end-line"]);
+        var endColumn = int.Parse(arguments["end-column"]);
 
-        var command = new Command(Name, "Extract selected statements into a new method")
-        {
-            project, file, span.StartLine, span.StartColumn, span.EndLine, span.EndColumn,
-        };
-
-        command.SetAction(async (parseResult, cancellationToken) => await RunAsync(
-            parseResult.GetValue(project)!,
-            parseResult.GetValue(file)!,
-            parseResult.GetValue(span.StartLine),
-            parseResult.GetValue(span.StartColumn),
-            parseResult.GetValue(span.EndLine),
-            parseResult.GetValue(span.EndColumn),
-            cancellationToken));
-
-        return command;
-    }
-
-    static async Task<int> RunAsync(string projectPath, string filePath, int startLine, int startColumn, int endLine, int endColumn, CancellationToken cancellationToken)
-    {
         var (workspace, solution) = await WorkspaceLoader.OpenAsync(projectPath);
         using var _ = workspace;
 

@@ -1,4 +1,3 @@
-using System.CommandLine;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
@@ -9,21 +8,19 @@ namespace RoslynRefactor;
 
 static class CommandSupport
 {
-    public static Option<string> ProjectOption() =>
-        new("--project") { Required = true, Description = "Path to a .sln or .csproj file" };
+    public static readonly CommandParameter ProjectParameter =
+        new("project", "Path to a .sln or .csproj file");
 
-    public static Option<string> FileOption(string description) =>
-        new("--file") { Required = true, Description = description };
+    public static CommandParameter FileParameter(string description) =>
+        new("file", description);
 
-    public sealed class SpanOptions
-    {
-        public Option<int> StartLine { get; } = new("--start-line") { Required = true, Description = "1-based start line of the selection" };
-        public Option<int> StartColumn { get; } = new("--start-column") { Required = true, Description = "1-based start column of the selection" };
-        public Option<int> EndLine { get; } = new("--end-line") { Required = true, Description = "1-based end line of the selection" };
-        public Option<int> EndColumn { get; } = new("--end-column") { Required = true, Description = "1-based end column of the selection" };
-
-        public IEnumerable<Option> All => [StartLine, StartColumn, EndLine, EndColumn];
-    }
+    public static readonly IReadOnlyList<CommandParameter> SpanParameters =
+    [
+        new("start-line", "1-based start line of the selection", ValueType: typeof(int)),
+        new("start-column", "1-based start column of the selection", ValueType: typeof(int)),
+        new("end-line", "1-based end line of the selection", ValueType: typeof(int)),
+        new("end-column", "1-based end column of the selection", ValueType: typeof(int)),
+    ];
 
     public static TextSpan? ToSpan(SourceText text, int startLine, int startColumn, int endLine, int endColumn)
     {

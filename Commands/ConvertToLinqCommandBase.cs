@@ -1,4 +1,3 @@
-using System.CommandLine;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
@@ -12,32 +11,25 @@ abstract class ConvertToLinqCommandBase
         CommandSupport.LoadInternalProvider(
             "Microsoft.CodeAnalysis.CSharp.ConvertLinq.ConvertForEachToLinqQuery.CSharpConvertForEachToLinqQueryProvider"));
 
-    protected static Command Build(string name, string description, string equivalenceKey)
+    protected static CommandDescriptor BuildDescriptor(string name, string description, string equivalenceKey) => new(
+        name,
+        description,
+        [
+            CommandSupport.ProjectParameter,
+            CommandSupport.FileParameter("Path to the file containing the selection"),
+            .. CommandSupport.SpanParameters,
+        ],
+        (arguments, cancellationToken) => RunAsync(arguments, equivalenceKey, cancellationToken));
+
+    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, string equivalenceKey, CancellationToken cancellationToken)
     {
-        var project = CommandSupport.ProjectOption();
-        var file = CommandSupport.FileOption("Path to the file containing the selection");
-        var span = new CommandSupport.SpanOptions();
+        var projectPath = arguments["project"];
+        var filePath = arguments["file"];
+        var startLine = int.Parse(arguments["start-line"]);
+        var startColumn = int.Parse(arguments["start-column"]);
+        var endLine = int.Parse(arguments["end-line"]);
+        var endColumn = int.Parse(arguments["end-column"]);
 
-        var command = new Command(name, description)
-        {
-            project, file, span.StartLine, span.StartColumn, span.EndLine, span.EndColumn,
-        };
-
-        command.SetAction(async (parseResult, cancellationToken) => await RunAsync(
-            parseResult.GetValue(project)!,
-            parseResult.GetValue(file)!,
-            parseResult.GetValue(span.StartLine),
-            parseResult.GetValue(span.StartColumn),
-            parseResult.GetValue(span.EndLine),
-            parseResult.GetValue(span.EndColumn),
-            equivalenceKey,
-            cancellationToken));
-
-        return command;
-    }
-
-    static async Task<int> RunAsync(string projectPath, string filePath, int startLine, int startColumn, int endLine, int endColumn, string equivalenceKey, CancellationToken cancellationToken)
-    {
         var (workspace, solution) = await WorkspaceLoader.OpenAsync(projectPath);
         using var _ = workspace;
 
