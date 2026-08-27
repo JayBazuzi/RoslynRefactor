@@ -1,5 +1,8 @@
 using System.CommandLine;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeActions;
+using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynRefactor;
@@ -45,4 +48,53 @@ static class CommandSupport
         solution.Projects
             .SelectMany(p => p.Documents)
             .FirstOrDefault(d => string.Equals(Path.GetFullPath(d.FilePath ?? ""), fullFilePath, StringComparison.OrdinalIgnoreCase));
+
+    // Some Roslyn CodeRefactoringProvider implementations are internal to their assembly, so they must be
+    // located and instantiated via reflection. Everything else (CodeRefactoringProvider, CodeRefactoringContext,
+    // CodeAction, CodeActionOperation) is public API.
+    public static CodeRefactoringProvider LoadInternalProvider(string typeName)
+    {
+        var assemblyName = typeName.StartsWith("Microsoft.CodeAnalysis.CSharp.", StringComparison.Ordinal)
+            ? "Microsoft.CodeAnalysis.CSharp.Features"
+            : "Microsoft.CodeAnalysis.Features";
+        var assembly = Assembly.Load(assemblyName);
+        var providerType = assembly.GetType(typeName)
+            ?? throw new InvalidOperationException($"Could not locate Roslyn's {typeName}. This tool depends on a Roslyn-internal type that may have moved or been renamed in this Roslyn version.");
+        return (CodeRefactoringProvider)Activator.CreateInstance(providerType)!;
+    }
+
+    public static CodeAction? FindByEquivalenceKey(IEnumerable<CodeAction> actions, string equivalenceKey)
+    {
+        foreach (var action in actions)
+        {
+            if (string.Equals(action.EquivalenceKey, equivalenceKey, StringComparison.Ordinal))
+            {
+                return action;
+            }
+
+            var nested = FindByEquivalenceKey(action.NestedActions, equivalenceKey);
+            if (nested is not null)
+            {
+                return nested;
+            }
+        }
+
+        return null;
+    }
+
+    public static void CollectLeaves(IEnumerable<CodeAction> actions, List<CodeAction> leaves)
+    {
+        foreach (var action in actions)
+        {
+            var nested = action.NestedActions;
+            if (nested.Length == 0)
+            {
+                leaves.Add(action);
+            }
+            else
+            {
+                CollectLeaves(nested, leaves);
+            }
+        }
+    }
 }

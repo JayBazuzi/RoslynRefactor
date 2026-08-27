@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
@@ -9,16 +8,9 @@ namespace RoslynRefactor;
 
 sealed class ExtractMethodCommand : ICommand
 {
-    // Microsoft.CodeAnalysis.CodeRefactorings.ExtractMethod.ExtractMethodCodeRefactoringProvider is internal to
-    // Microsoft.CodeAnalysis.Features, so it must be located and instantiated via reflection. Everything else
-    // (CodeRefactoringProvider, CodeRefactoringContext, CodeAction, CodeActionOperation) is public API.
     static readonly Lazy<CodeRefactoringProvider> Provider = new(() =>
-    {
-        var features = Assembly.Load("Microsoft.CodeAnalysis.Features");
-        var providerType = features.GetType("Microsoft.CodeAnalysis.CodeRefactorings.ExtractMethod.ExtractMethodCodeRefactoringProvider")
-            ?? throw new InvalidOperationException("Could not locate Roslyn's ExtractMethodCodeRefactoringProvider. This tool depends on a Roslyn-internal type that may have moved or been renamed in this Roslyn version.");
-        return (CodeRefactoringProvider)Activator.CreateInstance(providerType)!;
-    });
+        CommandSupport.LoadInternalProvider(
+            "Microsoft.CodeAnalysis.CodeRefactorings.ExtractMethod.ExtractMethodCodeRefactoringProvider"));
 
     public static Command Build()
     {
@@ -69,7 +61,7 @@ sealed class ExtractMethodCommand : ICommand
         var context = new CodeRefactoringContext(document, span.Value, actions.Add, cancellationToken);
         await Provider.Value.ComputeRefactoringsAsync(context);
 
-        var extractMethodAction = FindByEquivalenceKey(actions, "Extract_method");
+        var extractMethodAction = CommandSupport.FindByEquivalenceKey(actions, "Extract_method");
         if (extractMethodAction is null)
         {
             Console.Error.WriteLine("error: Roslyn's Extract Method refactoring is not available for this selection.");
@@ -96,24 +88,5 @@ sealed class ExtractMethodCommand : ICommand
 
         Console.WriteLine($"updated: {fullFilePath}");
         return 0;
-    }
-
-    static CodeAction? FindByEquivalenceKey(IEnumerable<CodeAction> actions, string equivalenceKey)
-    {
-        foreach (var action in actions)
-        {
-            if (string.Equals(action.EquivalenceKey, equivalenceKey, StringComparison.Ordinal))
-            {
-                return action;
-            }
-
-            var nested = FindByEquivalenceKey(action.NestedActions, equivalenceKey);
-            if (nested is not null)
-            {
-                return nested;
-            }
-        }
-
-        return null;
     }
 }

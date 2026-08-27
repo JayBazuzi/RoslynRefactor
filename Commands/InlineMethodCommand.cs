@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
@@ -9,16 +8,9 @@ namespace RoslynRefactor;
 
 sealed class InlineMethodCommand : ICommand
 {
-    // Microsoft.CodeAnalysis.CSharp.CodeRefactorings.InlineMethod.CSharpInlineMethodRefactoringProvider is
-    // internal to Microsoft.CodeAnalysis.CSharp.Features, so it must be located and instantiated via reflection.
-    // Everything else (CodeRefactoringProvider, CodeRefactoringContext, CodeAction, CodeActionOperation) is public API.
     static readonly Lazy<CodeRefactoringProvider> Provider = new(() =>
-    {
-        var features = Assembly.Load("Microsoft.CodeAnalysis.CSharp.Features");
-        var providerType = features.GetType("Microsoft.CodeAnalysis.CSharp.CodeRefactorings.InlineMethod.CSharpInlineMethodRefactoringProvider")
-            ?? throw new InvalidOperationException("Could not locate Roslyn's CSharpInlineMethodRefactoringProvider. This tool depends on a Roslyn-internal type that may have moved or been renamed in this Roslyn version.");
-        return (CodeRefactoringProvider)Activator.CreateInstance(providerType)!;
-    });
+        CommandSupport.LoadInternalProvider(
+            "Microsoft.CodeAnalysis.CSharp.CodeRefactorings.InlineMethod.CSharpInlineMethodRefactoringProvider"));
 
     public static Command Build()
     {
@@ -70,7 +62,7 @@ sealed class InlineMethodCommand : ICommand
         await Provider.Value.ComputeRefactoringsAsync(context);
 
         var leaves = new List<CodeAction>();
-        CollectLeaves(actions, leaves);
+        CommandSupport.CollectLeaves(actions, leaves);
 
         // Roslyn also offers "Inline and keep 'X'", which inlines the call but leaves the original method
         // declaration in place. We only want the variant that removes the original declaration.
@@ -107,21 +99,5 @@ sealed class InlineMethodCommand : ICommand
 
         Console.WriteLine($"updated: {fullFilePath}");
         return 0;
-    }
-
-    static void CollectLeaves(IEnumerable<CodeAction> actions, List<CodeAction> leaves)
-    {
-        foreach (var action in actions)
-        {
-            var nested = action.NestedActions;
-            if (nested.Length == 0)
-            {
-                leaves.Add(action);
-            }
-            else
-            {
-                CollectLeaves(nested, leaves);
-            }
-        }
     }
 }

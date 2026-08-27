@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
@@ -9,16 +8,9 @@ namespace RoslynRefactor;
 
 abstract class ConvertToLinqCommandBase
 {
-    // Microsoft.CodeAnalysis.CSharp.ConvertLinq.ConvertForEachToLinqQuery.CSharpConvertForEachToLinqQueryProvider is
-    // internal to Microsoft.CodeAnalysis.CSharp.Features, so it must be located and instantiated via reflection.
-    // Everything else (CodeRefactoringProvider, CodeRefactoringContext, CodeAction, CodeActionOperation) is public API.
     static readonly Lazy<CodeRefactoringProvider> Provider = new(() =>
-    {
-        var features = Assembly.Load("Microsoft.CodeAnalysis.CSharp.Features");
-        var providerType = features.GetType("Microsoft.CodeAnalysis.CSharp.ConvertLinq.ConvertForEachToLinqQuery.CSharpConvertForEachToLinqQueryProvider")
-            ?? throw new InvalidOperationException("Could not locate Roslyn's CSharpConvertForEachToLinqQueryProvider. This tool depends on a Roslyn-internal type that may have moved or been renamed in this Roslyn version.");
-        return (CodeRefactoringProvider)Activator.CreateInstance(providerType)!;
-    });
+        CommandSupport.LoadInternalProvider(
+            "Microsoft.CodeAnalysis.CSharp.ConvertLinq.ConvertForEachToLinqQuery.CSharpConvertForEachToLinqQueryProvider"));
 
     protected static Command Build(string name, string description, string equivalenceKey)
     {
@@ -70,7 +62,7 @@ abstract class ConvertToLinqCommandBase
         var context = new CodeRefactoringContext(document, span.Value, actions.Add, cancellationToken);
         await Provider.Value.ComputeRefactoringsAsync(context);
 
-        var convertAction = FindByEquivalenceKey(actions, equivalenceKey);
+        var convertAction = CommandSupport.FindByEquivalenceKey(actions, equivalenceKey);
         if (convertAction is null)
         {
             Console.Error.WriteLine("error: Roslyn's Convert to LINQ refactoring is not available for this selection.");
@@ -97,24 +89,5 @@ abstract class ConvertToLinqCommandBase
 
         Console.WriteLine($"updated: {fullFilePath}");
         return 0;
-    }
-
-    static CodeAction? FindByEquivalenceKey(IEnumerable<CodeAction> actions, string equivalenceKey)
-    {
-        foreach (var action in actions)
-        {
-            if (string.Equals(action.EquivalenceKey, equivalenceKey, StringComparison.Ordinal))
-            {
-                return action;
-            }
-
-            var nested = FindByEquivalenceKey(action.NestedActions, equivalenceKey);
-            if (nested is not null)
-            {
-                return nested;
-            }
-        }
-
-        return null;
     }
 }
