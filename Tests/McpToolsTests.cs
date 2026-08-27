@@ -12,15 +12,20 @@ public class McpToolsTests
         var markdown = new System.Text.StringBuilder();
         foreach (var tool in tools)
         {
-            markdown.AppendLine($"## {tool.ProtocolTool.Name}");
-            markdown.AppendLine();
-            markdown.AppendLine(tool.ProtocolTool.Description);
-            markdown.AppendLine();
-            markdown.AppendLine("```json");
-            markdown.AppendLine(JsonSerializer.Serialize(tool.ProtocolTool.InputSchema,
-                new JsonSerializerOptions { WriteIndented = true }));
-            markdown.AppendLine("```");
-            markdown.AppendLine();
+            var json = JsonSerializer.Serialize(
+                tool.ProtocolTool.InputSchema,
+                new JsonSerializerOptions { WriteIndented = true });
+            markdown.Append($"""
+                ## {tool.ProtocolTool.Name}
+
+                {tool.ProtocolTool.Description}
+
+                ```json
+                {json}
+                ```
+
+
+                """);
         }
 
         VerifyWithExtension(markdown.ToString(), ".md");
