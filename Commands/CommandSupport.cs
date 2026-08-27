@@ -22,17 +22,17 @@ static class CommandSupport
         new("end-column", "1-based end column of the selection", ValueType: typeof(int)),
     ];
 
-    public static TextSpan? ToTextSpan(SourceText text, int startLine, int startColumn, int endLine, int endColumn)
+    public static TextSpan? ToTextSpan(SourceText text, LineAndColumnSpan span)
     {
-        var start = new LinePosition(startLine - 1, startColumn - 1);
-        var end = new LinePosition(endLine - 1, endColumn - 1);
-        if (start.Line < 0 || start.Line >= text.Lines.Count || end.Line < 0 || end.Line >= text.Lines.Count)
+        var startPosition = new LinePosition(span.start.line - 1, span.start.column - 1);
+        var endPosition = new LinePosition(span.end.line - 1, span.end.column - 1);
+        if (startPosition.Line < 0 || startPosition.Line >= text.Lines.Count || endPosition.Line < 0 || endPosition.Line >= text.Lines.Count)
         {
             return null;
         }
 
-        var startPos = text.Lines[start.Line].Start + start.Character;
-        var endPos = text.Lines[end.Line].Start + end.Character;
+        var startPos = text.Lines[startPosition.Line].Start + startPosition.Character;
+        var endPos = text.Lines[endPosition.Line].Start + endPosition.Character;
         if (endPos < startPos)
         {
             return null;
@@ -113,10 +113,9 @@ static class CommandSupport
     {
         var projectPath = arguments["project"];
         var filePath = arguments["file"];
-        var startLine = int.Parse(arguments["start-line"]);
-        var startColumn = int.Parse(arguments["start-column"]);
-        var endLine = int.Parse(arguments["end-line"]);
-        var endColumn = int.Parse(arguments["end-column"]);
+        var span = new LineAndColumnSpan(
+            new LineAndColumn(int.Parse(arguments["start-line"]), int.Parse(arguments["start-column"])),
+            new LineAndColumn(int.Parse(arguments["end-line"]), int.Parse(arguments["end-column"])));
 
         var (workspace, solution) = await WorkspaceLoader.OpenAsync(projectPath);
         using var _ = workspace;
@@ -129,14 +128,14 @@ static class CommandSupport
         }
 
         var text = await document.GetTextAsync(cancellationToken);
-        var span = ToTextSpan(text, startLine, startColumn, endLine, endColumn);
-        if (span is null)
+        var textSpan = ToTextSpan(text, span);
+        if (textSpan is null)
         {
             throw new InvalidOperationException($"selection is out of range for {fullFilePath}");
         }
 
         var actions = new List<CodeAction>();
-        var context = new CodeRefactoringContext(document, span.Value, actions.Add, cancellationToken);
+        var context = new CodeRefactoringContext(document, textSpan.Value, actions.Add, cancellationToken);
         await provider.ComputeRefactoringsAsync(context);
 
         var selectedAction = selectAction(actions);
