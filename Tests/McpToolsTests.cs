@@ -1,4 +1,6 @@
 using System.Text.Json;
+using ApprovalUtilities.Utilities;
+using ModelContextProtocol.Server;
 
 namespace RoslynRefactor.Tests;
 
@@ -7,15 +9,21 @@ public class McpToolsTests
     [Fact]
     public void ApproveToolDescriptions()
     {
-        var tools = McpTools.CreateAll().OrderBy(t => t.ProtocolTool.Name);
+        VerifyWithExtension(
+            McpTools.CreateAll()
+                .OrderBy(t => t.ProtocolTool.Name)
+                .Select(FormatToolDescription)
+                .JoinWith(""),
+            ".md"
+        );
+    }
 
-        var markdown = new System.Text.StringBuilder();
-        foreach (var tool in tools)
-        {
-            var json = JsonSerializer.Serialize(
-                tool.ProtocolTool.InputSchema,
-                new JsonSerializerOptions { WriteIndented = true });
-            markdown.Append($"""
+    private string FormatToolDescription(McpServerTool tool)
+    {
+        var json = JsonSerializer.Serialize(
+            tool.ProtocolTool.InputSchema,
+            new JsonSerializerOptions { WriteIndented = true });
+        return $"""
                 ## {tool.ProtocolTool.Name}
 
                 {tool.ProtocolTool.Description}
@@ -25,9 +33,7 @@ public class McpToolsTests
                 ```
 
 
-                """);
-        }
-
-        VerifyWithExtension(markdown.ToString(), ".md");
+                """;
     }
+
 }
