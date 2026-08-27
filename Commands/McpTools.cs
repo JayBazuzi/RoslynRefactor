@@ -12,13 +12,14 @@ namespace RoslynRefactor;
 static class McpTools
 {
     public static IEnumerable<McpServerTool> CreateAll() =>
-        new RoslynRefactorRootCommand().Subcommands
-            .Where(command => command.Name != McpCommand.Name)
-            .Select(command => new CommandLineTool(command));
+        RoslynRefactorRootCommand.RefactorSubCommands.Values
+            .Select(CommandLineTool.Create);
 
     sealed class CommandLineTool : McpServerTool
     {
         readonly Command command;
+
+        public static CommandLineTool Create(Command command) => new(command);
 
         public CommandLineTool(Command command)
         {
