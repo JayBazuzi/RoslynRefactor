@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -22,11 +23,15 @@ sealed class McpCommand : ICommand
         builder.Logging.ClearProviders();
 
         builder.Services
-            .AddMcpServer(options => options.ServerInfo = new() { Name = "RoslynRefactor", Version = "0.1.0" })
+            .AddMcpServer(options => options.ServerInfo = new() { Name = "RoslynRefactor", Version = GetVersion() })
             .WithStdioServerTransport()
             .WithTools(McpTools.CreateAll());
 
         await builder.Build().RunAsync(cancellationToken);
         return 0;
     }
+
+    static string GetVersion() =>
+        Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        ?? "0.0.0";
 }
