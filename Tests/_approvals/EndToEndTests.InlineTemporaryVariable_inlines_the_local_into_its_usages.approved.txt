@@ -13,14 +13,18 @@ class Program
 {
     static void Main()
     {
-        int oldName = 42;
-        Console.WriteLine(oldName * 2);
+        Console.WriteLine(42 * 2);
         PrintGreeting();
 
         var widgets = new List<Widget> { new Widget { Value = 1 }, new Widget { Value = 2 } };
-        var results = (from widget in widgets
-                       where widget.Value > 0
-                       select widget.Value * 2).ToList();
+        var results = new List<int>();
+        foreach (var widget in widgets)
+        {
+            if (widget.Value > 0)
+            {
+                results.Add(widget.Value * 2);
+            }
+        }
     }
 
     static void PrintGreeting()

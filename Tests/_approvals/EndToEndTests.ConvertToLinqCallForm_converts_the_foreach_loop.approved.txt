@@ -15,8 +15,14 @@ class Program
     {
         int oldName = 42;
         Console.WriteLine(oldName * 2);
+        PrintGreeting();
 
         var widgets = new List<Widget> { new Widget { Value = 1 }, new Widget { Value = 2 } };
         var results = widgets.Where(widget => widget.Value > 0).Select(widget => widget.Value * 2).ToList();
+    }
+
+    static void PrintGreeting()
+    {
+        Console.WriteLine("Hello");
     }
 }

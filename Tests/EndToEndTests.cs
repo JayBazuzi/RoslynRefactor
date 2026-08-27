@@ -17,8 +17,8 @@ public class EndToEndTests
             "extract-method",
             "--project", sample.SolutionPath,
             "--file", sample.ProgramFilePath,
-            "--start-line", "21", "--start-column", "9",
-            "--end-line", "27", "--end-column", "10");
+            "--start-line", "22", "--start-column", "9",
+            "--end-line", "28", "--end-column", "10");
 
         var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
         Approvals.Verify(content);
@@ -35,6 +35,38 @@ public class EndToEndTests
             "--file", sample.ProgramFilePath,
             "--start-line", "17", "--start-column", "27",
             "--end-line", "17", "--end-column", "38");
+
+        var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
+        Approvals.Verify(content);
+    }
+
+    [Fact]
+    public async Task InlineTemporaryVariable_inlines_the_local_into_its_usages()
+    {
+        var sample = ProcessTestHost.CreateSampleCopy();
+
+        var result = await ProcessTestHost.RunAsync(
+            "inline-temporary-variable",
+            "--project", sample.SolutionPath,
+            "--file", sample.ProgramFilePath,
+            "--start-line", "16", "--start-column", "13",
+            "--end-line", "16", "--end-column", "20");
+
+        var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
+        Approvals.Verify(content);
+    }
+
+    [Fact]
+    public async Task InlineMethod_inlines_the_called_method_at_the_call_site()
+    {
+        var sample = ProcessTestHost.CreateSampleCopy();
+
+        var result = await ProcessTestHost.RunAsync(
+            "inline-method",
+            "--project", sample.SolutionPath,
+            "--file", sample.ProgramFilePath,
+            "--start-line", "18", "--start-column", "9",
+            "--end-line", "18", "--end-column", "25");
 
         var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
         Approvals.Verify(content);
@@ -65,8 +97,8 @@ public class EndToEndTests
             "convert-to-linq-call-form",
             "--project", sample.SolutionPath,
             "--file", sample.ProgramFilePath,
-            "--start-line", "21", "--start-column", "9",
-            "--end-line", "27", "--end-column", "10");
+            "--start-line", "22", "--start-column", "9",
+            "--end-line", "28", "--end-column", "10");
 
         var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
         Approvals.Verify(content);
@@ -81,8 +113,8 @@ public class EndToEndTests
             "convert-to-linq-query-form",
             "--project", sample.SolutionPath,
             "--file", sample.ProgramFilePath,
-            "--start-line", "21", "--start-column", "9",
-            "--end-line", "27", "--end-column", "10");
+            "--start-line", "22", "--start-column", "9",
+            "--end-line", "28", "--end-column", "10");
 
         var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
         Approvals.Verify(content);

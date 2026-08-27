@@ -15,6 +15,7 @@ class Program
     {
         int oldName = 42;
         Console.WriteLine(oldName * 2);
+        PrintGreeting();
 
         var widgets = new List<Widget> { new Widget { Value = 1 }, new Widget { Value = 2 } };
         var results = new List<int>();
@@ -25,5 +26,10 @@ class Program
                 results.Add(widget.Value * 2);
             }
         }
+    }
+
+    static void PrintGreeting()
+    {
+        Console.WriteLine("Hello");
     }
 }
