@@ -8,6 +8,8 @@ namespace RoslynRefactor;
 
 sealed class ExtractMethodCommand : ICommand
 {
+    internal static readonly string Name = "extract-method";
+
     static readonly Lazy<CodeRefactoringProvider> Provider = new(() =>
         CommandSupport.LoadInternalProvider(
             "Microsoft.CodeAnalysis.CodeRefactorings.ExtractMethod.ExtractMethodCodeRefactoringProvider"));
@@ -18,7 +20,7 @@ sealed class ExtractMethodCommand : ICommand
         var file = CommandSupport.FileOption("Path to the file containing the selection");
         var span = new CommandSupport.SpanOptions();
 
-        var command = new Command("extract-method", "Extract selected statements into a new method")
+        var command = new Command(Name, "Extract selected statements into a new method")
         {
             project, file, span.StartLine, span.StartColumn, span.EndLine, span.EndColumn,
         };

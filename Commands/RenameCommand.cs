@@ -8,6 +8,8 @@ namespace RoslynRefactor;
 
 sealed class RenameCommand : ICommand
 {
+    internal static readonly string Name = "rename";
+
     public static Command Build()
     {
         var project = CommandSupport.ProjectOption();
@@ -16,7 +18,7 @@ sealed class RenameCommand : ICommand
         var column = new Option<int>("--column") { Required = true, Description = "1-based column of the symbol" };
         var to = new Option<string>("--to") { Required = true, Description = "The new name for the symbol" };
 
-        var command = new Command("rename", "Rename a symbol across a solution/project")
+        var command = new Command(Name, "Rename a symbol across a solution/project")
         {
             project, file, line, column, to,
         };

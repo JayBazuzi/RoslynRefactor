@@ -8,6 +8,8 @@ namespace RoslynRefactor;
 
 sealed class InlineTemporaryVariableCommand : ICommand
 {
+    internal static readonly string Name = "inline-temporary-variable";
+
     static readonly Lazy<CodeRefactoringProvider> Provider = new(() =>
         CommandSupport.LoadInternalProvider(
             "Microsoft.CodeAnalysis.CSharp.CodeRefactorings.InlineTemporary.CSharpInlineTemporaryCodeRefactoringProvider"));
@@ -18,7 +20,7 @@ sealed class InlineTemporaryVariableCommand : ICommand
         var file = CommandSupport.FileOption("Path to the file containing the selection");
         var span = new CommandSupport.SpanOptions();
 
-        var command = new Command("inline-temporary-variable", "Inline a local variable's initializer into all usages, then remove the declaration")
+        var command = new Command(Name, "Inline a local variable's initializer into all usages, then remove the declaration")
         {
             project, file, span.StartLine, span.StartColumn, span.EndLine, span.EndColumn,
         };

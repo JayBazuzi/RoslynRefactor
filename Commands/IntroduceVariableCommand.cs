@@ -8,6 +8,8 @@ namespace RoslynRefactor;
 
 sealed class IntroduceVariableCommand : ICommand
 {
+    internal static readonly string Name = "introduce-variable";
+
     static readonly Lazy<CodeRefactoringProvider> Provider = new(() =>
         CommandSupport.LoadInternalProvider(
             "Microsoft.CodeAnalysis.IntroduceVariable.IntroduceVariableCodeRefactoringProvider"));
@@ -18,7 +20,7 @@ sealed class IntroduceVariableCommand : ICommand
         var file = CommandSupport.FileOption("Path to the file containing the selection");
         var span = new CommandSupport.SpanOptions();
 
-        var command = new Command("introduce-variable", "Introduce a local variable for a selected expression")
+        var command = new Command(Name, "Introduce a local variable for a selected expression")
         {
             project, file, span.StartLine, span.StartColumn, span.EndLine, span.EndColumn,
         };

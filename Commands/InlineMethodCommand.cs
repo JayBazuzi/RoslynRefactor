@@ -8,6 +8,8 @@ namespace RoslynRefactor;
 
 sealed class InlineMethodCommand : ICommand
 {
+    internal static readonly string Name = "inline-method";
+
     static readonly Lazy<CodeRefactoringProvider> Provider = new(() =>
         CommandSupport.LoadInternalProvider(
             "Microsoft.CodeAnalysis.CSharp.CodeRefactorings.InlineMethod.CSharpInlineMethodRefactoringProvider"));
@@ -18,7 +20,7 @@ sealed class InlineMethodCommand : ICommand
         var file = CommandSupport.FileOption("Path to the file containing the call site");
         var span = new CommandSupport.SpanOptions();
 
-        var command = new Command("inline-method", "Inline a called method's (or local function's) body at the call site")
+        var command = new Command(Name, "Inline a called method's (or local function's) body at the call site")
         {
             project, file, span.StartLine, span.StartColumn, span.EndLine, span.EndColumn,
         };
