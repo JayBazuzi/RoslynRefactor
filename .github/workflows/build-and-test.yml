@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
@@ -45,3 +45,9 @@ jobs:
           user: JayBazuzi
       - name: Push to NuGet.org
         run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - name: Create release tag in Git
+        run: |
+          VERSION=$(ls ./nupkg/*.nupkg | head -n1 | sed -E 's/.*\/[^.]+\.([0-9].*)\.nupkg/\1/')
+          TAG="v$VERSION"
+          git tag "$TAG"
+          git push origin "$TAG"
