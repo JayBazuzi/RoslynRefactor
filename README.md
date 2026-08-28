@@ -34,4 +34,4 @@ See this project's [AGENTS.md](https://github.com/JayBazuzi/RoslynRefactor/blob/
 
 `RoslynRefactor mcp` runs an MCP server over stdio that exposes every refactoring command above as an MCP tool, for clients that speak MCP instead of invoking a CLI directly.
 
-![MCP Tools](https://raw.githubusercontent.com/JayBazuzi/RoslynRefactor/refs/heads/main/Tests/_approvals/McpToolsTests.ApproveToolDescriptions.approved.md)
+[JSON descriptions](https://github.com/JayBazuzi/RoslynRefactor/blob/main/Tests/_approvals/McpToolsTests.ApproveToolDescriptions.approved.md) of the tools exposed by the MCP server.
