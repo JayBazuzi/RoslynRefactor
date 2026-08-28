@@ -117,7 +117,10 @@ static class RenameConflictDetector
     static readonly MethodInfo FindLocationsMethod =
         SymbolicRenameLocationsType.GetMethod(
             "FindLocationsInCurrentProcessAsync",
-            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!;
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static,
+            binder: null,
+            types: [typeof(ISymbol), typeof(Solution), typeof(SymbolRenameOptions), typeof(CancellationToken)],
+            modifiers: null)!;
 
     static readonly Type ConflictResolverType =
         WorkspacesAssembly.GetType("Microsoft.CodeAnalysis.Rename.ConflictEngine.ConflictResolver", throwOnError: true)!;
