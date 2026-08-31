@@ -22,17 +22,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="RoslynRefactor.Tests" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="Tests\**" />
-    <Content Remove="Tests\**" />
-    <None Remove="Tests\**" />
   </ItemGroup>
 
   <ItemGroup>

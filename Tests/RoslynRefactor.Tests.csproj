@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RoslynRefactor.csproj" />
+    <ProjectReference Include="..\RoslynRefactor\RoslynRefactor.csproj" />
   </ItemGroup>
 
   <ItemGroup>
