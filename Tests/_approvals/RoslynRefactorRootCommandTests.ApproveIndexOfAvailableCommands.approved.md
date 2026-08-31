@@ -1,4 +1,4 @@
-﻿| Command | Description |
+| Command | Description |
 | --- | --- |
 | [convert-to-linq-call-form](https://raw.githubusercontent.com/JayBazuzi/RoslynRefactor/refs/heads/main/Tests/_approvals/RoslynRefactorRootCommandTests.ApproveHelpText.convert-to-linq-call-form.approved.md) | Convert a foreach loop into a LINQ expression using fluent method calls (Where/Select) |
 | [convert-to-linq-query-form](https://raw.githubusercontent.com/JayBazuzi/RoslynRefactor/refs/heads/main/Tests/_approvals/RoslynRefactorRootCommandTests.ApproveHelpText.convert-to-linq-query-form.approved.md) | Convert a foreach loop into a LINQ expression using query syntax (from/where/select) |
