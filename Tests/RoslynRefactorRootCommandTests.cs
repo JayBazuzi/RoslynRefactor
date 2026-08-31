@@ -14,7 +14,7 @@ public class RoslynRefactorRootCommandTests
         var markdown = new System.Text.StringBuilder();
         markdown.AppendLine("| Command | Description |");
         markdown.AppendLine("| --- | --- |");
-        foreach (var command in root.Subcommands.OrderBy(c => c.Name))
+        foreach (var command in root.Subcommands.OrderBy(c => c.Name).Where(c => c.Name != "mcp"))
         {
             var fileName = $"https://raw.githubusercontent.com/JayBazuzi/RoslynRefactor/refs/heads/main/Tests/_approvals/RoslynRefactorRootCommandTests.ApproveHelpText.{command.Name.Replace(" ", "_")}.approved.md";
             markdown.AppendLine($"| [{command.Name}]({fileName}) | {command.Description} |");
