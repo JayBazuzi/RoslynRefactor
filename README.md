@@ -25,6 +25,21 @@ RoslynRefactor extract-method --project Sample.sln --file Sample/Program.cs --st
 ```
 <!-- endSnippet -->
 
+## Batch response files
+
+Put an `@file` token anywhere on the command line to run the same command once per line
+of that file, combined with any shared arguments given alongside the `@file` token:
+
+```cmd
+RoslynRefactor extract-method --project Sample.sln @inputs.txt
+```
+
+`inputs.txt`:
+```
+--file Sample/Program.cs --start-line 21 --start-column 9 --end-line 27 --end-column 10
+--file Sample/Program.cs --start-line 29 --start-column 9 --end-line 35 --end-column 10
+```
+
 ## Using with AI coding agents
 
 See this project's [AGENTS.md](https://github.com/JayBazuzi/RoslynRefactor/blob/main/AGENTS.md).

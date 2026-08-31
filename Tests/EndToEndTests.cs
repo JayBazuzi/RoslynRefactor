@@ -120,6 +120,27 @@ public class EndToEndTests
     }
 
     [Fact]
+    public async Task BatchResponseFile_runs_the_command_once_per_line()
+    {
+        var sample = ProcessTestHost.CreateSampleCopy();
+        var batchFilePath = Path.Combine(Path.GetDirectoryName(sample.SolutionPath)!, "batch.txt");
+        await File.WriteAllLinesAsync(batchFilePath,
+        [
+            "--line 21 --column 13 --to totals",
+            "--line 22 --column 22 --to item",
+        ]);
+
+        var result = await ProcessTestHost.RunAsync(
+            "rename",
+            "--project", sample.SolutionPath,
+            "--file", sample.ProgramFilePath,
+            "@" + batchFilePath);
+
+        var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
+        Approvals.Verify(content);
+    }
+
+    [Fact]
     public async Task ConvertToLinqQueryForm_converts_the_foreach_loop()
     {
         var sample = ProcessTestHost.CreateSampleCopy();

@@ -18,3 +18,20 @@ MCP tools aren't available, fall back to `dotnet run --project RoslynRefactor --
 | [introduce-variable](https://raw.githubusercontent.com/JayBazuzi/RoslynRefactor/refs/heads/main/Tests/_approvals/RoslynRefactorRootCommandTests.ApproveHelpText.introduce-variable.approved.md) | Introduce a local variable for a selected expression |
 | [rename](https://raw.githubusercontent.com/JayBazuzi/RoslynRefactor/refs/heads/main/Tests/_approvals/RoslynRefactorRootCommandTests.ApproveHelpText.rename.approved.md) | Rename a symbol across a solution/project |
 <!-- endInclude -->
+
+## Batch mode
+
+To apply the same command to many selections, put an `@file` token anywhere on the
+command line, naming a batch response file. Each non-blank, non-`#`-comment line in
+that file supplies the remaining arguments for one invocation, combined with whatever
+shared arguments (e.g. `--project`) were given alongside the `@file` token:
+
+```
+RoslynRefactor extract-method --project Sample.sln @inputs.txt
+```
+
+`inputs.txt`:
+```
+--file Sample/Program.cs --start-line 21 --start-column 9 --end-line 27 --end-column 10
+--file Sample/Program.cs --start-line 29 --start-column 9 --end-line 35 --end-column 10
+```
