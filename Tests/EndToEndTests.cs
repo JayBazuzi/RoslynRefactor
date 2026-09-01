@@ -141,6 +141,32 @@ public class EndToEndTests
     }
 
     [Fact]
+    public async Task BatchResponseFile_renames_are_unaffected_by_earlier_renames_shifting_positions_on_the_same_line()
+    {
+        // Both "results" and "widget" appear on line 26 ("results.Add(widget.Value * 2);"), at
+        // columns 17 and 29 respectively. Renaming "results" (7 chars) to something much longer
+        // shifts everything after it on that line, so if the batch resolved "widget" by column
+        // *after* applying the first rename, it would land on the wrong token - or no token at
+        // all. Both positions here are given relative to the file's ORIGINAL contents.
+        var sample = ProcessTestHost.CreateSampleCopy();
+        var batchFilePath = Path.Combine(Path.GetDirectoryName(sample.SolutionPath)!, "batch.txt");
+        await File.WriteAllLinesAsync(batchFilePath,
+        [
+            "--line 26 --column 17 --to renamedResultsList",
+            "--line 26 --column 29 --to renamedWidgetVar",
+        ]);
+
+        var result = await ProcessTestHost.RunAsync(
+            "rename",
+            "--project", sample.SolutionPath,
+            "--file", sample.ProgramFilePath,
+            "@" + batchFilePath);
+
+        var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
+        Approvals.Verify(content);
+    }
+
+    [Fact]
     public async Task ConvertToLinqQueryForm_converts_the_foreach_loop()
     {
         var sample = ProcessTestHost.CreateSampleCopy();
