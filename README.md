@@ -42,7 +42,7 @@ RoslynRefactor extract-method --project Sample.sln @inputs.txt
 
 ## Using with AI coding agents
 
-See this project's [AGENTS.md](https://github.com/JayBazuzi/RoslynRefactor/blob/main/AGENTS.md).
+See this project's [AGENTS.md](https://github.com/JayBazuzi/RoslynRefactor/blob/main/AGENTS.md) and [SKILL.md](https://github.com/JayBazuzi/RoslynRefactor/blob/main/.claude/skills/roslyn-refactor-tool/SKILL.md).
 
 ## MCP server
 
