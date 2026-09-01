@@ -46,6 +46,13 @@ See this project's [AGENTS.md](https://github.com/JayBazuzi/RoslynRefactor/blob/
 
 ## MCP server
 
-`RoslynRefactor mcp` runs an MCP server over stdio that exposes every refactoring command above as an MCP tool, for clients that speak MCP instead of invoking a CLI directly.
-
 [JSON descriptions](https://github.com/JayBazuzi/RoslynRefactor/blob/main/Tests/_approvals/McpToolsTests.ApproveToolDescriptions.approved.md) of the tools exposed by the MCP server.
+
+### Using the MCP server with Claude Code
+
+If you have `RoslynRefactor` installed as a [dotnet tool](https://www.nuget.org/packages/RoslynRefactor):
+
+```cmd
+dotnet tool install -g RoslynRefactor --prerelease
+claude mcp add RoslynRefactor -- RoslynRefactor mcp
+```
