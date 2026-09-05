@@ -14,6 +14,7 @@ A command-line tool for running Roslyn-powered refactorings against a C# solutio
 | [inline-method](https://raw.githubusercontent.com/JayBazuzi/RoslynRefactor/refs/heads/main/Tests/_approvals/RoslynRefactorRootCommandTests.ApproveHelpText.inline-method.approved.md) | Inline a called method's (or local function's) body at the call site |
 | [inline-temporary-variable](https://raw.githubusercontent.com/JayBazuzi/RoslynRefactor/refs/heads/main/Tests/_approvals/RoslynRefactorRootCommandTests.ApproveHelpText.inline-temporary-variable.approved.md) | Inline a local variable's initializer into all usages, then remove the declaration |
 | [introduce-variable](https://raw.githubusercontent.com/JayBazuzi/RoslynRefactor/refs/heads/main/Tests/_approvals/RoslynRefactorRootCommandTests.ApproveHelpText.introduce-variable.approved.md) | Introduce a local variable for a selected expression |
+| [move-static-member](https://raw.githubusercontent.com/JayBazuzi/RoslynRefactor/refs/heads/main/Tests/_approvals/RoslynRefactorRootCommandTests.ApproveHelpText.move-static-member.approved.md) | Move a static member (method/property/field/event) to another type in the same project |
 | [rename](https://raw.githubusercontent.com/JayBazuzi/RoslynRefactor/refs/heads/main/Tests/_approvals/RoslynRefactorRootCommandTests.ApproveHelpText.rename.approved.md) | Rename a symbol across a solution/project |
 <!-- endInclude -->
 
