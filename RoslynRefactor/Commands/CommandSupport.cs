@@ -2,6 +2,8 @@ using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
+using Microsoft.CodeAnalysis.FindSymbols;
+using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynRefactor;
@@ -20,6 +22,12 @@ static class CommandSupport
         new("start-column", "1-based start column of the selection", ValueType: typeof(int)),
         new("end-line", "1-based end line of the selection", ValueType: typeof(int)),
         new("end-column", "1-based end column of the selection", ValueType: typeof(int)),
+    ];
+
+    public static IReadOnlyList<CommandParameter> PointParameters(string subject) =>
+    [
+        new("line", $"1-based line of the {subject}", ValueType: typeof(int)),
+        new("column", $"1-based column of the {subject}", ValueType: typeof(int)),
     ];
 
     public static TextSpan? ToTextSpan(SourceText text, LineAndColumnSpan span)
@@ -45,6 +53,67 @@ static class CommandSupport
         solution.Projects
             .SelectMany(p => p.Documents)
             .FirstOrDefault(d => string.Equals(Path.GetFullPath(d.FilePath ?? ""), fullFilePath, StringComparison.OrdinalIgnoreCase));
+
+    // Opens the workspace for projectPath and resolves filePath to a Document in it. Disposes the
+    // workspace itself if the file can't be found, so callers only need to dispose on the success path.
+    public static async Task<(MSBuildWorkspace Workspace, Solution Solution, Document Document, string FullFilePath)> OpenDocumentAsync(
+        string projectPath, string filePath)
+    {
+        var (workspace, solution) = await WorkspaceLoader.OpenAsync(projectPath);
+        var fullFilePath = Path.GetFullPath(filePath);
+        var document = FindDocument(solution, fullFilePath);
+        if (document is null)
+        {
+            workspace.Dispose();
+            throw new InvalidOperationException($"file not found in workspace: {fullFilePath}");
+        }
+
+        return (workspace, solution, document, fullFilePath);
+    }
+
+    public static async Task<ISymbol> ResolveSymbolAtPositionAsync(Document document, int line, int column, CancellationToken cancellationToken)
+    {
+        var text = await document.GetTextAsync(cancellationToken);
+        // Convert 1-based line/column to an absolute position.
+        var linePosition = new LinePosition(line - 1, column - 1);
+        if (linePosition.Line < 0 || linePosition.Line >= text.Lines.Count)
+        {
+            throw new InvalidOperationException($"line {line} is out of range for {document.FilePath}");
+        }
+        var position = text.Lines[linePosition.Line].Start + linePosition.Character;
+
+        var semanticModel = await document.GetSemanticModelAsync(cancellationToken)
+            ?? throw new InvalidOperationException("Could not obtain a semantic model for the document.");
+
+        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(semanticModel, position, document.Project.Solution.Workspace, cancellationToken: cancellationToken);
+        return symbol ?? throw new InvalidOperationException($"no symbol found at {document.FilePath}:{line}:{column}");
+    }
+
+    // Diffs newSolution against originalSolution, reports each changed file, applies the change set to the
+    // workspace, and reports the final summary line. Shared tail of every command that produces a new Solution.
+    public static bool TryApplyChanges(Workspace workspace, Solution originalSolution, Solution newSolution, string noChangesMessage, TextWriter output)
+    {
+        var changes = newSolution.GetChanges(originalSolution);
+        var changedDocuments = changes.GetProjectChanges().SelectMany(pc => pc.GetChangedDocuments()).ToList();
+        if (changedDocuments.Count == 0)
+        {
+            output.WriteLine(noChangesMessage);
+            return false;
+        }
+
+        foreach (var docId in changedDocuments)
+        {
+            output.WriteLine($"updating: {newSolution.GetDocument(docId)!.FilePath}");
+        }
+
+        if (!workspace.TryApplyChanges(newSolution))
+        {
+            throw new InvalidOperationException("workspace rejected the changes");
+        }
+
+        output.WriteLine($"{changedDocuments.Count} file(s) updated.");
+        return true;
+    }
 
     // Some Roslyn CodeRefactoringProvider implementations are internal to their assembly, so they must be
     // located and instantiated via reflection. Everything else (CodeRefactoringProvider, CodeRefactoringContext,
@@ -111,15 +180,8 @@ static class CommandSupport
             new LineAndColumn(int.Parse(arguments["start-line"]), int.Parse(arguments["start-column"])),
             new LineAndColumn(int.Parse(arguments["end-line"]), int.Parse(arguments["end-column"])));
 
-        var (workspace, solution) = await WorkspaceLoader.OpenAsync(projectPath);
+        var (workspace, solution, document, fullFilePath) = await OpenDocumentAsync(projectPath, filePath);
         using var _ = workspace;
-
-        var fullFilePath = Path.GetFullPath(filePath);
-        var document = FindDocument(solution, fullFilePath);
-        if (document is null)
-        {
-            throw new InvalidOperationException($"file not found in workspace: {fullFilePath}");
-        }
 
         var text = await document.GetTextAsync(cancellationToken);
         var textSpan = ToTextSpan(text, span);
@@ -144,13 +206,7 @@ static class CommandSupport
         var newSolution = applyOperation.ChangedSolution;
 
         output.WriteLine($"{progressMessage} ({fullFilePath})");
-
-        if (!workspace.TryApplyChanges(newSolution))
-        {
-            throw new InvalidOperationException("workspace rejected the changes");
-        }
-
-        output.WriteLine($"updated: {fullFilePath}");
+        TryApplyChanges(workspace, solution, newSolution, noChangesMessage, output);
         return 0;
     }
 }
