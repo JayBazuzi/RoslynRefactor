@@ -49,6 +49,11 @@ new=$(git commit-tree "$tree" -p <tip-of-movement> -p <last-commit-before-moveme
 git reset --hard "$new"   # only safe if <tip> hasn't been pushed/shared yet
 ```
 
+## Tooling
+
+Don't reach for Python scripts to accomplish tasks - it isn't always installed in the environments
+this repo runs in. Use PowerShell/Bash, .NET, or the available tools instead.
+
 ## Docs
 
 README.md and the `roslyn-refactor-tool` skill's command table are generated from
