@@ -1,4 +1,4 @@
-## convert-to-linq-call-form
+﻿## convert-to-linq-call-form
 
 Convert a foreach loop into a LINQ expression using fluent method calls (Where/Select)
 
@@ -296,6 +296,44 @@ Introduce a local variable for a selected expression
     "start-column",
     "end-line",
     "end-column"
+  ]
+}
+```
+
+## make-method-static
+
+Convert an instance method into a static method by adding a parameter for its receiver, and update all call sites
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "Path to a .sln or .csproj file"
+    },
+    "file": {
+      "type": "string",
+      "description": "Path to the file containing the method"
+    },
+    "line": {
+      "type": "integer",
+      "description": "1-based line of the method"
+    },
+    "column": {
+      "type": "integer",
+      "description": "1-based column of the method"
+    },
+    "parameter-name": {
+      "type": "string",
+      "description": "Name for the new receiver parameter (default: derived from the type name, falling back to self/self2/... on collision)"
+    }
+  },
+  "required": [
+    "project",
+    "file",
+    "line",
+    "column"
   ]
 }
 ```
