@@ -45,3 +45,8 @@ won't compile). The fix is to skip the dialog layer entirely:
 
 See `RoslynRefactor/Commands/MoveStaticMemberCommand.cs` for a full worked example (wraps
 `MoveStaticMembersWithDialogCodeAction`).
+
+Once the command and its approval tests are in and passing, stop there - don't run
+`dotnet mdsnippets` to regenerate README.md or the `roslyn-refactor-tool` skill's command table.
+A GitHub Action does that from `Tests/_approvals/*.approved.md` on CI; a manual run just adds an
+extra commit for something CI already does.
