@@ -4,8 +4,14 @@ description: Use the RoslynRefactor commands (extract-method, inline-method, inl
 ---
 
 Strongly prefer to use the refactoring tool rather than editing files by hand. It is
-available as MCP tools (one per command below); use those instead of shelling out. If
-MCP tools aren't available, fall back to `dotnet run --project RoslynRefactor -- {COMMAND} {OPTIONS}`.
+available as MCP tools (one per command below, via the `roslyn-refactor` server declared in
+`.mcp.json`); use those instead of shelling out. Before falling back to the CLI, check for them
+with `ToolSearch` (e.g. `query: "mcp__roslyn-refactor"`) — a deferred MCP tool only becomes
+callable once ToolSearch has surfaced its schema, so an empty CLI-only tool list does not by
+itself mean the server is missing. Only fall back to
+`dotnet run --project RoslynRefactor -- {COMMAND} {OPTIONS}` once that search comes back empty,
+and mention to the user that the `roslyn-refactor` MCP server didn't appear to be connected this
+session (it may just need approving/restarting) so the CLI fallback isn't mistaken for the norm.
 
 <!-- include: Tests/_approvals/RoslynRefactorRootCommandTests.ApproveIndexOfAvailableCommands.approved.md -->
 | Command | Description |
