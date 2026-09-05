@@ -4,3 +4,4 @@ obj/
 settings.local.json
 
 *.received.*
+.mcp.json
