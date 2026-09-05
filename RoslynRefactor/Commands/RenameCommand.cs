@@ -1,6 +1,5 @@
 using System.Reflection;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Text;
 
@@ -14,8 +13,7 @@ sealed class RenameCommand : ICommand
         [
             CommandSupport.ProjectParameter,
             CommandSupport.FileParameter("Path to the file containing the symbol"),
-            new("line", "1-based line of the symbol", ValueType: typeof(int)),
-            new("column", "1-based column of the symbol", ValueType: typeof(int)),
+            .. CommandSupport.PointParameters("symbol"),
             new("to", "The new name for the symbol"),
         ],
         RunAsync);
@@ -28,18 +26,10 @@ sealed class RenameCommand : ICommand
         var column = int.Parse(arguments["column"]);
         var newName = arguments["to"];
 
-        var (workspace, solution) = await WorkspaceLoader.OpenAsync(projectPath);
-        using var _ = workspace;
+        var (workspace, solution, document, _) = await CommandSupport.OpenDocumentAsync(projectPath, filePath);
+        using var _workspace = workspace;
 
-        var fullFilePath = Path.GetFullPath(filePath);
-        var document = CommandSupport.FindDocument(solution, fullFilePath);
-
-        if (document is null)
-        {
-            throw new InvalidOperationException($"file not found in workspace: {fullFilePath}");
-        }
-
-        var symbol = await ResolveSymbolAsync(document, line, column, cancellationToken);
+        var symbol = await CommandSupport.ResolveSymbolAtPositionAsync(document, line, column, cancellationToken);
 
         output.WriteLine($"Renaming '{symbol.Name}' ({symbol.Kind}) -> '{newName}'");
 
@@ -58,54 +48,8 @@ sealed class RenameCommand : ICommand
 
         var newSolution = await Renamer.RenameSymbolAsync(solution, symbol, options, newName, cancellationToken);
 
-        var changes = newSolution.GetChanges(solution);
-        var changedDocuments = changes.GetProjectChanges()
-            .SelectMany(pc => pc.GetChangedDocuments())
-            .ToList();
-
-        if (changedDocuments.Count == 0)
-        {
-            output.WriteLine("No changes produced.");
-            return 0;
-        }
-
-        foreach (var docId in changedDocuments)
-        {
-            var doc = newSolution.GetDocument(docId)!;
-            output.WriteLine($"updating: {doc.FilePath}");
-        }
-
-
-        if (!workspace.TryApplyChanges(newSolution))
-        {
-            throw new InvalidOperationException("workspace rejected the changes");
-        }
-
-        output.WriteLine($"{changedDocuments.Count} file(s) updated.");
+        CommandSupport.TryApplyChanges(workspace, solution, newSolution, "No changes produced.", output);
         return 0;
-    }
-
-    static async Task<ISymbol> ResolveSymbolAsync(Document document, int line, int column, CancellationToken cancellationToken)
-    {
-        var text = await document.GetTextAsync(cancellationToken);
-        // Convert 1-based line/column to an absolute position.
-        var linePosition = new LinePosition(line - 1, column - 1);
-        if (linePosition.Line < 0 || linePosition.Line >= text.Lines.Count)
-        {
-            throw new InvalidOperationException($"line {line} is out of range for {document.FilePath}");
-        }
-        var position = text.Lines[linePosition.Line].Start + linePosition.Character;
-
-        var semanticModel = await document.GetSemanticModelAsync(cancellationToken)
-            ?? throw new InvalidOperationException("Could not obtain a semantic model for the document.");
-
-        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(semanticModel, position, document.Project.Solution.Workspace, cancellationToken: cancellationToken);
-        if (symbol is null)
-        {
-            throw new InvalidOperationException($"no symbol found at {document.FilePath}:{line}:{column}");
-        }
-
-        return symbol;
     }
 
     // Batch entry point: every rename's (file, line, column) is resolved to a symbol against the
@@ -145,7 +89,7 @@ sealed class RenameCommand : ICommand
                 throw new InvalidOperationException($"file not found in workspace: {fullFilePath}");
             }
 
-            var symbol = await ResolveSymbolAsync(document, line, column, cancellationToken);
+            var symbol = await CommandSupport.ResolveSymbolAtPositionAsync(document, line, column, cancellationToken);
             var key = SymbolKeyReflection.Create(symbol, cancellationToken);
             steps.Add((key, document.Project.Id, newName, $"'{symbol.Name}' ({symbol.Kind}) -> '{newName}' ({fullFilePath}:{line}:{column})"));
         }
@@ -176,29 +120,7 @@ sealed class RenameCommand : ICommand
             currentSolution = await Renamer.RenameSymbolAsync(currentSolution, symbol, options, step.NewName, cancellationToken);
         }
 
-        var changes = currentSolution.GetChanges(originalSolution);
-        var changedDocuments = changes.GetProjectChanges()
-            .SelectMany(pc => pc.GetChangedDocuments())
-            .ToList();
-
-        if (changedDocuments.Count == 0)
-        {
-            output.WriteLine("No changes produced.");
-            return 0;
-        }
-
-        foreach (var docId in changedDocuments)
-        {
-            var doc = currentSolution.GetDocument(docId)!;
-            output.WriteLine($"updating: {doc.FilePath}");
-        }
-
-        if (!workspace.TryApplyChanges(currentSolution))
-        {
-            throw new InvalidOperationException("workspace rejected the changes");
-        }
-
-        output.WriteLine($"{changedDocuments.Count} file(s) updated.");
+        CommandSupport.TryApplyChanges(workspace, originalSolution, currentSolution, "No changes produced.", output);
         return 0;
     }
 }
