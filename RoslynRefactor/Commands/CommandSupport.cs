@@ -71,16 +71,21 @@ static class CommandSupport
         return (workspace, solution, document, fullFilePath);
     }
 
-    public static async Task<ISymbol> ResolveSymbolAtPositionAsync(Document document, int line, int column, CancellationToken cancellationToken)
+    // Converts 1-based line/column to an absolute position within text.
+    public static int ToPosition(SourceText text, int line, int column, string? filePath = null)
     {
-        var text = await document.GetTextAsync(cancellationToken);
-        // Convert 1-based line/column to an absolute position.
         var linePosition = new LinePosition(line - 1, column - 1);
         if (linePosition.Line < 0 || linePosition.Line >= text.Lines.Count)
         {
-            throw new InvalidOperationException($"line {line} is out of range for {document.FilePath}");
+            throw new InvalidOperationException($"line {line} is out of range for {filePath}");
         }
-        var position = text.Lines[linePosition.Line].Start + linePosition.Character;
+        return text.Lines[linePosition.Line].Start + linePosition.Character;
+    }
+
+    public static async Task<ISymbol> ResolveSymbolAtPositionAsync(Document document, int line, int column, CancellationToken cancellationToken)
+    {
+        var text = await document.GetTextAsync(cancellationToken);
+        var position = ToPosition(text, line, column, document.FilePath);
 
         var semanticModel = await document.GetSemanticModelAsync(cancellationToken)
             ?? throw new InvalidOperationException("Could not obtain a semantic model for the document.");
