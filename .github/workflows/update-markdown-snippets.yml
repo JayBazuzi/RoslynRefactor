@@ -11,6 +11,7 @@ jobs:
       contents: write
     steps:
     - uses: actions/checkout@v7
+    - run: ./tidy-code
     - run: ./run_mdsnippets
     - run: ./build-and-test
     - name: Check for changes
@@ -21,7 +22,7 @@ jobs:
       uses: github-actions-x/commit@v2.9
       with:
         github-token: "${{ secrets.GITHUB_TOKEN }}"
-        commit-message: ". d update markdown snippets"
+        commit-message: ". d tidy code and update markdown snippets"
         rebase: 'true'
         name: Github Actions
         email: actions@github.com
