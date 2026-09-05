@@ -39,9 +39,11 @@ Case distinguishes "pay more attention": uppercase = intended/user-visible behav
 
 This repo also uses extension letters beyond the core four (e.g. `e` for environment/tooling/CI changes, `t` for test-only changes — see `git log --oneline` for real examples and current usage before inventing a new one). Extension intentions are a per-team addition; check history rather than assuming a fixed global list.
 
+The intention field is always a single letter — never the spelled-out name (`e`, not `environment`; `d`, not `documentation`).
+
 ## Writing a commit message
 
 1. Look at `git log --oneline -20` in the current repo to confirm the risk symbols and intention letters actually in use (this repo's convention may extend the core spec).
-2. Pick the intention letter for what the commit is doing.
+2. Pick the intention letter — a single character — for what the commit is doing.
 3. Pick the risk level based on how the change was verified (tool-driven refactor with clean build → `.`; hand edits with tests → `^` or `!`; unverified/WIP → `@`).
 4. Write the summary as a short imperative phrase after the two-character prefix.
