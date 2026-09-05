@@ -35,7 +35,7 @@ Core intentions, from the spec:
 | `R`/`r` | Refactoring | Change implementation without changing behavior |
 | `D`/`d` | Documentation | Change something communicating to team members; no behavior impact |
 
-Case distinguishes "pay more attention": uppercase = intended/user-visible behavior change, lowercase = no behavior change or purely internal.
+Case distinguishes "pay more attention": uppercase = intended/user-visible behavior change, lowercase = no behavior change or purely internal. "User" means a user of this product (the RoslynRefactor tool) — a change to CI, dev tooling, or scripts is internal/lowercase even though it's visible to contributors or affects the build pipeline.
 
 This repo also uses extension letters beyond the core four (e.g. `e` for environment/tooling/CI changes, `t` for test-only changes — see `git log --oneline` for real examples and current usage before inventing a new one). Extension intentions are a per-team addition; check history rather than assuming a fixed global list.
 
