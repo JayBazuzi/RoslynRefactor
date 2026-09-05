@@ -2,8 +2,6 @@ using System.Collections.Immutable;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
-using Microsoft.CodeAnalysis.FindSymbols;
-using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynRefactor;
 
@@ -21,8 +19,7 @@ sealed class MoveStaticMemberCommand : ICommand
         [
             CommandSupport.ProjectParameter,
             CommandSupport.FileParameter("Path to the file containing the member"),
-            new("line", "1-based line of the member", ValueType: typeof(int)),
-            new("column", "1-based column of the member", ValueType: typeof(int)),
+            .. CommandSupport.PointParameters("member"),
             new("to", "Fully qualified name of the destination type (must already exist in the same project)"),
         ],
         RunAsync);
@@ -35,17 +32,10 @@ sealed class MoveStaticMemberCommand : ICommand
         var column = int.Parse(arguments["column"]);
         var destinationTypeName = arguments["to"];
 
-        var (workspace, solution) = await WorkspaceLoader.OpenAsync(projectPath);
-        using var _ = workspace;
+        var (workspace, solution, document, _) = await CommandSupport.OpenDocumentAsync(projectPath, filePath);
+        using var _workspace = workspace;
 
-        var fullFilePath = Path.GetFullPath(filePath);
-        var document = CommandSupport.FindDocument(solution, fullFilePath);
-        if (document is null)
-        {
-            throw new InvalidOperationException($"file not found in workspace: {fullFilePath}");
-        }
-
-        var member = await ResolveSymbolAsync(document, line, column, cancellationToken);
+        var member = await CommandSupport.ResolveSymbolAtPositionAsync(document, line, column, cancellationToken);
         ValidateMember(member);
         var containingType = member.ContainingType
             ?? throw new InvalidOperationException($"'{member.Name}' has no containing type.");
@@ -64,43 +54,8 @@ sealed class MoveStaticMemberCommand : ICommand
 
         var newSolution = await MoveOperationsAsync(document, containingType, destinationType, member, cancellationToken);
 
-        var changes = newSolution.GetChanges(solution);
-        var changedDocuments = changes.GetProjectChanges().SelectMany(pc => pc.GetChangedDocuments()).ToList();
-        if (changedDocuments.Count == 0)
-        {
-            output.WriteLine("Roslyn's Move Static Members refactoring produced no changes.");
-            return 0;
-        }
-
-        foreach (var docId in changedDocuments)
-        {
-            output.WriteLine($"updating: {newSolution.GetDocument(docId)!.FilePath}");
-        }
-
-        if (!workspace.TryApplyChanges(newSolution))
-        {
-            throw new InvalidOperationException("workspace rejected the changes");
-        }
-
-        output.WriteLine($"{changedDocuments.Count} file(s) updated.");
+        CommandSupport.TryApplyChanges(workspace, solution, newSolution, "Roslyn's Move Static Members refactoring produced no changes.", output);
         return 0;
-    }
-
-    static async Task<ISymbol> ResolveSymbolAsync(Document document, int line, int column, CancellationToken cancellationToken)
-    {
-        var text = await document.GetTextAsync(cancellationToken);
-        var linePosition = new LinePosition(line - 1, column - 1);
-        if (linePosition.Line < 0 || linePosition.Line >= text.Lines.Count)
-        {
-            throw new InvalidOperationException($"line {line} is out of range for {document.FilePath}");
-        }
-        var position = text.Lines[linePosition.Line].Start + linePosition.Character;
-
-        var semanticModel = await document.GetSemanticModelAsync(cancellationToken)
-            ?? throw new InvalidOperationException("Could not obtain a semantic model for the document.");
-
-        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(semanticModel, position, document.Project.Solution.Workspace, cancellationToken: cancellationToken);
-        return symbol ?? throw new InvalidOperationException($"no symbol found at {document.FilePath}:{line}:{column}");
     }
 
     // Mirrors Roslyn's internal MemberAndDestinationValidator.IsMemberValid + the IsStatic/kind
