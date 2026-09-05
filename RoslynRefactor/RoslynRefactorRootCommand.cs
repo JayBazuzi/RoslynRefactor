@@ -13,6 +13,7 @@ sealed class RoslynRefactorRootCommand : RootCommand
     public static readonly IReadOnlyList<CommandDescriptor> RefactorDescriptors =
     [
         RenameCommand.Descriptor,
+        MoveStaticMemberCommand.Descriptor,
         ExtractMethodCommand.Descriptor,
         IntroduceVariableCommand.Descriptor,
         InlineTemporaryVariableCommand.Descriptor,

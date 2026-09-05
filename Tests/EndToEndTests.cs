@@ -104,6 +104,37 @@ public class EndToEndTests
     }
 
     [Fact]
+    public async Task MoveStaticMember_moves_the_static_method_to_the_destination_type()
+    {
+        var sample = ProcessTestHost.CreateSampleCopy();
+
+        var result = await ProcessTestHost.RunAsync(
+            "move-static-member",
+            "--project", sample.SolutionPath,
+            "--file", sample.ProgramFilePath,
+            "--line", "31", "--column", "17",
+            "--to", "Sample.Widget");
+
+        var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
+        Approvals.Verify(content);
+    }
+
+    [Fact]
+    public async Task MoveStaticMember_fails_when_the_member_is_not_static()
+    {
+        var sample = ProcessTestHost.CreateSampleCopy();
+
+        var result = await ProcessTestHost.RunAllowingFailureAsync(
+            "move-static-member",
+            "--project", sample.SolutionPath,
+            "--file", sample.ProgramFilePath,
+            "--line", "9", "--column", "16",
+            "--to", "Sample.Program");
+
+        Assert.NotEqual(0, result.ExitCode);
+    }
+
+    [Fact]
     public async Task ConvertToLinqCallForm_converts_the_foreach_loop()
     {
         var sample = ProcessTestHost.CreateSampleCopy();

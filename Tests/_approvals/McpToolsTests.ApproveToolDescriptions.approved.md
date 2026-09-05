@@ -1,4 +1,4 @@
-﻿## convert-to-linq-call-form
+## convert-to-linq-call-form
 
 Convert a foreach loop into a LINQ expression using fluent method calls (Where/Select)
 
@@ -258,6 +258,45 @@ Introduce a local variable for a selected expression
     "start-column",
     "end-line",
     "end-column"
+  ]
+}
+```
+
+## move-static-member
+
+Move a static member (method/property/field/event) to another type in the same project
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "Path to a .sln or .csproj file"
+    },
+    "file": {
+      "type": "string",
+      "description": "Path to the file containing the member"
+    },
+    "line": {
+      "type": "integer",
+      "description": "1-based line of the member"
+    },
+    "column": {
+      "type": "integer",
+      "description": "1-based column of the member"
+    },
+    "to": {
+      "type": "string",
+      "description": "Fully qualified name of the destination type (must already exist in the same project)"
+    }
+  },
+  "required": [
+    "project",
+    "file",
+    "line",
+    "column",
+    "to"
   ]
 }
 ```
