@@ -31,17 +31,19 @@ sealed class ChangeSignatureCommand : ICommand
         ],
         RunAsync);
 
-    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, TextWriter output, CancellationToken cancellationToken)
-    {
-        var projectPath = arguments["project"];
-        var filePath = arguments["file"];
-        var line = int.Parse(arguments["line"]);
-        var column = int.Parse(arguments["column"]);
-        var requestedOrder = arguments["order"]
-            .Split(',', StringSplitOptions.TrimEntries)
-            .Select(s => int.Parse(s) - 1)
-            .ToList();
+    static Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, TextWriter output, CancellationToken cancellationToken) =>
+        RunAsync(
+            arguments["project"],
+            arguments["file"],
+            int.Parse(arguments["line"]),
+            int.Parse(arguments["column"]),
+            arguments["order"].Split(',', StringSplitOptions.TrimEntries).Select(s => int.Parse(s) - 1).ToList(),
+            output,
+            cancellationToken);
 
+    static async Task<int> RunAsync(
+        string projectPath, string filePath, int line, int column, List<int> requestedOrder, TextWriter output, CancellationToken cancellationToken)
+    {
         var (workspace, solution, document, fullFilePath) = await CommandSupport.OpenDocumentAsync(projectPath, filePath);
         using var _workspace = workspace;
 

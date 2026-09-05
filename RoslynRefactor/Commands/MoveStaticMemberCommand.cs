@@ -24,14 +24,11 @@ sealed class MoveStaticMemberCommand : ICommand
         ],
         RunAsync);
 
-    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, TextWriter output, CancellationToken cancellationToken)
-    {
-        var projectPath = arguments["project"];
-        var filePath = arguments["file"];
-        var line = int.Parse(arguments["line"]);
-        var column = int.Parse(arguments["column"]);
-        var destinationTypeName = arguments["to"];
+    static Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, TextWriter output, CancellationToken cancellationToken) =>
+        RunAsync(arguments["project"], arguments["file"], int.Parse(arguments["line"]), int.Parse(arguments["column"]), arguments["to"], output, cancellationToken);
 
+    static async Task<int> RunAsync(string projectPath, string filePath, int line, int column, string destinationTypeName, TextWriter output, CancellationToken cancellationToken)
+    {
         var (workspace, solution, document, _) = await CommandSupport.OpenDocumentAsync(projectPath, filePath);
         using var _workspace = workspace;
 

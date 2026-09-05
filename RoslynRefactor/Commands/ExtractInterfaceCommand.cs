@@ -24,14 +24,15 @@ sealed class ExtractInterfaceCommand : ICommand
         ],
         RunAsync);
 
-    static async Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, TextWriter output, CancellationToken cancellationToken)
+    static Task<int> RunAsync(IReadOnlyDictionary<string, string> arguments, TextWriter output, CancellationToken cancellationToken)
     {
-        var projectPath = arguments["project"];
-        var filePath = arguments["file"];
-        var line = int.Parse(arguments["line"]);
-        var column = int.Parse(arguments["column"]);
         arguments.TryGetValue("name", out var requestedName);
+        return RunAsync(arguments["project"], arguments["file"], int.Parse(arguments["line"]), int.Parse(arguments["column"]), requestedName, output, cancellationToken);
+    }
 
+    static async Task<int> RunAsync(
+        string projectPath, string filePath, int line, int column, string? requestedName, TextWriter output, CancellationToken cancellationToken)
+    {
         var (workspace, solution, document, fullFilePath) = await CommandSupport.OpenDocumentAsync(projectPath, filePath);
         using var _workspace = workspace;
 
