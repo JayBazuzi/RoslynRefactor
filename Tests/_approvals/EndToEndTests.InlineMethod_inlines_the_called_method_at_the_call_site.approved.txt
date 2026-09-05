@@ -28,3 +28,8 @@ class Program
         }
     }
 }
+
+class Greeter
+{
+    public string Greet(string name) => $"Hello, {name}!";
+}
