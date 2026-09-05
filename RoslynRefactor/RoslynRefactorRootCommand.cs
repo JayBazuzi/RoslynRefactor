@@ -15,6 +15,7 @@ sealed class RoslynRefactorRootCommand : RootCommand
         RenameCommand.Descriptor,
         MoveStaticMemberCommand.Descriptor,
         ExtractMethodCommand.Descriptor,
+        ExtractInterfaceCommand.Descriptor,
         IntroduceVariableCommand.Descriptor,
         InlineTemporaryVariableCommand.Descriptor,
         InlineMethodCommand.Descriptor,

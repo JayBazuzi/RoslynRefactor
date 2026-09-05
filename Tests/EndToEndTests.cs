@@ -135,6 +135,41 @@ public class EndToEndTests
     }
 
     [Fact]
+    public async Task ExtractInterface_extracts_public_members_into_a_new_interface_file()
+    {
+        var sample = ProcessTestHost.CreateSampleCopy();
+
+        var result = await ProcessTestHost.RunAsync(
+            "extract-interface",
+            "--project", sample.SolutionPath,
+            "--file", sample.ProgramFilePath,
+            "--line", "37", "--column", "7");
+
+        var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
+        Approvals.Verify(content);
+
+        var interfaceFilePath = Path.Combine(Path.GetDirectoryName(sample.ProgramFilePath)!, "IGreeter.cs");
+        Assert.True(File.Exists(interfaceFilePath));
+        var interfaceContent = await File.ReadAllTextAsync(interfaceFilePath);
+        Assert.Contains("interface IGreeter", interfaceContent);
+        Assert.Contains("string Greet(string name);", interfaceContent);
+    }
+
+    [Fact]
+    public async Task ExtractInterface_fails_when_the_type_has_no_extractable_members()
+    {
+        var sample = ProcessTestHost.CreateSampleCopy();
+
+        var result = await ProcessTestHost.RunAllowingFailureAsync(
+            "extract-interface",
+            "--project", sample.SolutionPath,
+            "--file", sample.ProgramFilePath,
+            "--line", "7", "--column", "7");
+
+        Assert.NotEqual(0, result.ExitCode);
+    }
+
+    [Fact]
     public async Task ConvertToLinqCallForm_converts_the_foreach_loop()
     {
         var sample = ProcessTestHost.CreateSampleCopy();

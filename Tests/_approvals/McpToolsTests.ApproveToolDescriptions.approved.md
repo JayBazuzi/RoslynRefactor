@@ -1,4 +1,4 @@
-## convert-to-linq-call-form
+﻿## convert-to-linq-call-form
 
 Convert a foreach loop into a LINQ expression using fluent method calls (Where/Select)
 
@@ -82,6 +82,44 @@ Convert a foreach loop into a LINQ expression using query syntax (from/where/sel
     "start-column",
     "end-line",
     "end-column"
+  ]
+}
+```
+
+## extract-interface
+
+Extract the public members of a class/struct/interface into a new interface, in a new file
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "Path to a .sln or .csproj file"
+    },
+    "file": {
+      "type": "string",
+      "description": "Path to the file containing the type"
+    },
+    "line": {
+      "type": "integer",
+      "description": "1-based line of the type"
+    },
+    "column": {
+      "type": "integer",
+      "description": "1-based column of the type"
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the extracted interface (default: \u0022I\u0022 \u002B the type\u0027s name)"
+    }
+  },
+  "required": [
+    "project",
+    "file",
+    "line",
+    "column"
   ]
 }
 ```
