@@ -13,7 +13,7 @@ static class ProcessTestHost
     // available alongside the test assembly; using its location avoids hardcoding a path.
     public static readonly string ToolExePath = typeof(RoslynRefactor.ICommand).Assembly.Location.Replace(".dll", OperatingSystem.IsWindows() ? ".exe" : "");
 
-    static readonly string FixturesSourceDir = FindFixturesSourceDir();
+    public static readonly string FixturesSourceDir = FindFixturesSourceDir();
 
     public static SampleCopy CreateSampleCopy()
     {
@@ -22,6 +22,28 @@ static class ProcessTestHost
         File.Copy(Path.Combine(FixturesSourceDir, "Sample.sln"), Path.Combine(dest, "Sample.sln"));
         CopyDirectory(Path.Combine(FixturesSourceDir, "Sample"), Path.Combine(dest, "Sample"));
         return new SampleCopy(Path.Combine(dest, "Sample.sln"), Path.Combine(dest, "Sample", "Program.cs"));
+    }
+
+    // Creates a scratch, single-file project (no .sln needed - WorkspaceLoader opens a .csproj
+    // directly) for tests that need many small, independent code samples rather than one shared
+    // fixture solution.
+    public static AdHocProject CreateAdHocProject(string fileName, string content)
+    {
+        var dest = Path.Combine(Path.GetTempPath(), "RoslynRefactorTests_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dest);
+        var projectPath = Path.Combine(dest, "Case.csproj");
+        File.WriteAllText(projectPath, """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net10.0</TargetFramework>
+                <ImplicitUsings>enable</ImplicitUsings>
+                <Nullable>enable</Nullable>
+              </PropertyGroup>
+            </Project>
+            """);
+        var filePath = Path.Combine(dest, fileName);
+        File.WriteAllText(filePath, content);
+        return new AdHocProject(projectPath, filePath);
     }
 
     public static async Task<ProcessResult> RunAsync(params string[] args)
@@ -91,3 +113,5 @@ static class ProcessTestHost
 record ProcessResult(int ExitCode, string StdOut, string StdErr);
 
 record SampleCopy(string SolutionPath, string ProgramFilePath);
+
+record AdHocProject(string ProjectPath, string FilePath);
