@@ -58,9 +58,8 @@ sealed class ExtractInterfaceCommand : ICommand
     static async Task<(object Service, object TypeAnalysisResult, INamedTypeSymbol TypeToExtractFrom, ImmutableArray<ISymbol> ExtractableMembers)> AnalyzeAsync(
         Document document, int position, CancellationToken cancellationToken)
     {
-        var featuresAssembly = Assembly.Load("Microsoft.CodeAnalysis.Features");
-        var serviceType = featuresAssembly.GetType("Microsoft.CodeAnalysis.ExtractInterface.AbstractExtractInterfaceService", throwOnError: true)!;
-        var typeDiscoveryRuleType = featuresAssembly.GetType("Microsoft.CodeAnalysis.ExtractInterface.TypeDiscoveryRule", throwOnError: true)!;
+        var serviceType = CommandSupport.GetFeaturesType("Microsoft.CodeAnalysis.ExtractInterface.AbstractExtractInterfaceService");
+        var typeDiscoveryRuleType = CommandSupport.GetFeaturesType("Microsoft.CodeAnalysis.ExtractInterface.TypeDiscoveryRule");
 
         var getRequiredService = typeof(Microsoft.CodeAnalysis.Host.LanguageServices)
             .GetMethod(nameof(Microsoft.CodeAnalysis.Host.LanguageServices.GetRequiredService))!
@@ -93,9 +92,8 @@ sealed class ExtractInterfaceCommand : ICommand
     static async Task<Solution> ExtractOperationsAsync(
         object service, object typeAnalysisResult, ImmutableArray<ISymbol> includedMembers, string interfaceName, string fileName, CancellationToken cancellationToken)
     {
-        var featuresAssembly = Assembly.Load("Microsoft.CodeAnalysis.Features");
-        var optionsType = featuresAssembly.GetType("Microsoft.CodeAnalysis.ExtractInterface.ExtractInterfaceOptionsResult", throwOnError: true)!;
-        var actionType = featuresAssembly.GetType("Microsoft.CodeAnalysis.ExtractInterface.ExtractInterfaceCodeAction", throwOnError: true)!;
+        var optionsType = CommandSupport.GetFeaturesType("Microsoft.CodeAnalysis.ExtractInterface.ExtractInterfaceOptionsResult");
+        var actionType = CommandSupport.GetFeaturesType("Microsoft.CodeAnalysis.ExtractInterface.ExtractInterfaceCodeAction");
 
         var extractLocationType = optionsType.GetNestedType("ExtractLocation", BindingFlags.Public | BindingFlags.NonPublic)!;
         var newFileLocation = Enum.Parse(extractLocationType, "NewFile");

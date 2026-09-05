@@ -108,10 +108,8 @@ sealed class MoveStaticMemberCommand : ICommand
     static async Task<Solution> MoveOperationsAsync(
         Document document, INamedTypeSymbol containingType, INamedTypeSymbol destinationType, ISymbol member, CancellationToken cancellationToken)
     {
-        var featuresAssembly = Assembly.Load("Microsoft.CodeAnalysis.Features");
-
-        var optionsType = featuresAssembly.GetType("Microsoft.CodeAnalysis.MoveStaticMembers.MoveStaticMembersOptions", throwOnError: true)!;
-        var actionType = featuresAssembly.GetType("Microsoft.CodeAnalysis.MoveStaticMembers.MoveStaticMembersWithDialogCodeAction", throwOnError: true)!;
+        var optionsType = CommandSupport.GetFeaturesType("Microsoft.CodeAnalysis.MoveStaticMembers.MoveStaticMembersOptions");
+        var actionType = CommandSupport.GetFeaturesType("Microsoft.CodeAnalysis.MoveStaticMembers.MoveStaticMembersWithDialogCodeAction");
 
         var selectedMembers = ImmutableArray.Create(member);
 

@@ -67,8 +67,7 @@ sealed class ChangeSignatureCommand : ICommand
     static async Task<(ISymbol Symbol, object ParameterConfiguration, CodeActionWithOptions CodeAction)> AnalyzeAsync(
         Document document, int position, CancellationToken cancellationToken)
     {
-        var featuresAssembly = Assembly.Load("Microsoft.CodeAnalysis.Features");
-        var serviceType = featuresAssembly.GetType("Microsoft.CodeAnalysis.ChangeSignature.AbstractChangeSignatureService", throwOnError: true)!;
+        var serviceType = CommandSupport.GetFeaturesType("Microsoft.CodeAnalysis.ChangeSignature.AbstractChangeSignatureService");
 
         var getRequiredService = typeof(LanguageServices)
             .GetMethod(nameof(LanguageServices.GetRequiredService))!
@@ -103,9 +102,8 @@ sealed class ChangeSignatureCommand : ICommand
     // re-derives which parameter is 'this'/'params' from position, exactly as Roslyn's own analysis did.
     static object Reorder(object originalParameterConfiguration, IReadOnlyList<int> requestedOrder)
     {
-        var featuresAssembly = Assembly.Load("Microsoft.CodeAnalysis.Features");
-        var parameterConfigurationType = featuresAssembly.GetType("Microsoft.CodeAnalysis.ChangeSignature.ParameterConfiguration", throwOnError: true)!;
-        var parameterType = featuresAssembly.GetType("Microsoft.CodeAnalysis.ChangeSignature.Parameter", throwOnError: true)!;
+        var parameterConfigurationType = CommandSupport.GetFeaturesType("Microsoft.CodeAnalysis.ChangeSignature.ParameterConfiguration");
+        var parameterType = CommandSupport.GetFeaturesType("Microsoft.CodeAnalysis.ChangeSignature.Parameter");
 
         var thisParameter = parameterConfigurationType.GetField("ThisParameter")!.GetValue(originalParameterConfiguration);
         var fullList = ((System.Collections.IEnumerable)parameterConfigurationType.GetMethod("ToListOfParameters")!.Invoke(originalParameterConfiguration, null)!)
@@ -153,9 +151,8 @@ sealed class ChangeSignatureCommand : ICommand
     static async Task<Solution> ChangeOperationsAsync(
         CodeActionWithOptions codeAction, object originalParameterConfiguration, object newParameterConfiguration, CancellationToken cancellationToken)
     {
-        var featuresAssembly = Assembly.Load("Microsoft.CodeAnalysis.Features");
-        var signatureChangeType = featuresAssembly.GetType("Microsoft.CodeAnalysis.ChangeSignature.SignatureChange", throwOnError: true)!;
-        var optionsType = featuresAssembly.GetType("Microsoft.CodeAnalysis.ChangeSignature.ChangeSignatureOptionsResult", throwOnError: true)!;
+        var signatureChangeType = CommandSupport.GetFeaturesType("Microsoft.CodeAnalysis.ChangeSignature.SignatureChange");
+        var optionsType = CommandSupport.GetFeaturesType("Microsoft.CodeAnalysis.ChangeSignature.ChangeSignatureOptionsResult");
 
         var signatureChangeCtor = signatureChangeType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Single();
         var signatureChange = signatureChangeCtor.Invoke([originalParameterConfiguration, newParameterConfiguration]);

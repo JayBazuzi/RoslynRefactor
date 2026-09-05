@@ -120,6 +120,12 @@ static class CommandSupport
         return true;
     }
 
+    // Several dialog-based-refactoring commands reflect into multiple internal types from
+    // Microsoft.CodeAnalysis.Features (options results, CodeActions, analysis contexts, etc.) - this is
+    // the shared "look up an internal type by name" step they all start from.
+    public static Type GetFeaturesType(string typeName) =>
+        Assembly.Load("Microsoft.CodeAnalysis.Features").GetType(typeName, throwOnError: true)!;
+
     // Some Roslyn CodeRefactoringProvider implementations are internal to their assembly, so they must be
     // located and instantiated via reflection. Everything else (CodeRefactoringProvider, CodeRefactoringContext,
     // CodeAction, CodeActionOperation) is public API.
