@@ -1,4 +1,4 @@
-﻿## convert-to-linq-call-form
+## convert-to-linq-call-form
 
 Convert a foreach loop into a LINQ expression using fluent method calls (Where/Select)
 
