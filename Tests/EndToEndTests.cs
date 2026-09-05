@@ -170,6 +170,39 @@ public class EndToEndTests
     }
 
     [Fact]
+    public async Task ChangeSignature_reorders_parameters_and_updates_the_call_site()
+    {
+        var sample = ProcessTestHost.CreateSampleCopy();
+        var describerFilePath = Path.Combine(Path.GetDirectoryName(sample.ProgramFilePath)!, "Describer.cs");
+
+        var result = await ProcessTestHost.RunAsync(
+            "reorder-parameters",
+            "--project", sample.SolutionPath,
+            "--file", describerFilePath,
+            "--line", "7", "--column", "17",
+            "--order", "2,1");
+
+        var content = await File.ReadAllTextAsync(describerFilePath);
+        Approvals.Verify(content);
+    }
+
+    [Fact]
+    public async Task ChangeSignature_fails_when_order_is_not_a_permutation_of_the_parameters()
+    {
+        var sample = ProcessTestHost.CreateSampleCopy();
+        var describerFilePath = Path.Combine(Path.GetDirectoryName(sample.ProgramFilePath)!, "Describer.cs");
+
+        var result = await ProcessTestHost.RunAllowingFailureAsync(
+            "reorder-parameters",
+            "--project", sample.SolutionPath,
+            "--file", describerFilePath,
+            "--line", "7", "--column", "17",
+            "--order", "1,1");
+
+        Assert.NotEqual(0, result.ExitCode);
+    }
+
+    [Fact]
     public async Task ConvertToLinqCallForm_converts_the_foreach_loop()
     {
         var sample = ProcessTestHost.CreateSampleCopy();

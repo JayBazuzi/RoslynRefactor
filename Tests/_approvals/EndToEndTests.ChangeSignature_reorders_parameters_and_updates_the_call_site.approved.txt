@@ -1,0 +1,16 @@
+﻿using System;
+
+namespace Sample;
+
+class Describer
+{
+    public void Describe(int age, string name)
+    {
+        Console.WriteLine($"{name} is {age}");
+    }
+
+    public void Run()
+    {
+        Describe(36, "Ada");
+    }
+}

@@ -378,3 +378,42 @@ Rename a symbol across a solution/project
 }
 ```
 
+## reorder-parameters
+
+Reorder a method/property/indexer/delegate's parameters and update all call sites
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "Path to a .sln or .csproj file"
+    },
+    "file": {
+      "type": "string",
+      "description": "Path to the file containing the member\u0027s declaration"
+    },
+    "line": {
+      "type": "integer",
+      "description": "1-based line of the member"
+    },
+    "column": {
+      "type": "integer",
+      "description": "1-based column of the member"
+    },
+    "order": {
+      "type": "string",
+      "description": "New 1-based parameter order as a comma-separated permutation of the current positions, e.g. \u00222,1,3\u0022"
+    }
+  },
+  "required": [
+    "project",
+    "file",
+    "line",
+    "column",
+    "order"
+  ]
+}
+```
+
