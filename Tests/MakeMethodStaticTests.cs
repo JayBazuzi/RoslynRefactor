@@ -26,8 +26,12 @@ public class MakeMethodStaticTests
         var rawInput = await File.ReadAllTextAsync(Path.Combine(FixturesDir, scenario + ".input.cs"));
         var expectedOutput = await File.ReadAllTextAsync(Path.Combine(FixturesDir, scenario + ".output.cs"));
 
+        ProcessTestHost.AssertCompiles(scenario + ".output.cs", expectedOutput);
+
         var (parameterName, withoutPragma) = ExtractParameterNamePragma(rawInput);
         var (content, line, column) = ExtractCaret(withoutPragma);
+
+        ProcessTestHost.AssertCompiles(scenario + ".input.cs", content);
 
         var project = ProcessTestHost.CreateAdHocProject(scenario + ".cs", content);
 

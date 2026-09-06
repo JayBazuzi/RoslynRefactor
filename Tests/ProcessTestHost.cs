@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace RoslynRefactor.Tests;
 
@@ -44,6 +46,33 @@ static class ProcessTestHost
         var filePath = Path.Combine(dest, fileName);
         File.WriteAllText(filePath, content);
         return new AdHocProject(projectPath, filePath);
+    }
+
+    // References for AssertCompiles: every assembly the current (net10.0) runtime ships with, so
+    // a fixture using ordinary BCL types (System.Action, Console, ...) compiles without needing a
+    // full MSBuild restore.
+    static readonly Lazy<MetadataReference[]> RuntimeReferences = new(() =>
+        ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)
+            .Split(Path.PathSeparator)
+            .Select(path => (MetadataReference)MetadataReference.CreateFromFile(path))
+            .ToArray());
+
+    // Verifies that a fixture file is valid, compilable C# - guards against fixtures whose
+    // "expected" output was hand-edited into something that no longer compiles.
+    public static void AssertCompiles(string fileName, string content)
+    {
+        var tree = CSharpSyntaxTree.ParseText(content, path: fileName);
+        var compilation = CSharpCompilation.Create(
+            "Case",
+            [tree],
+            RuntimeReferences.Value,
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, nullableContextOptions: NullableContextOptions.Enable));
+
+        var errors = compilation.GetDiagnostics()
+            .Where(d => d.Severity == DiagnosticSeverity.Error)
+            .ToArray();
+
+        Assert.True(errors.Length == 0, $"{fileName} does not compile:\n{string.Join('\n', errors.AsEnumerable())}");
     }
 
     public static async Task<ProcessResult> RunAsync(params string[] args)
