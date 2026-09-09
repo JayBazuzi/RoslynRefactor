@@ -86,6 +86,50 @@ Convert a foreach loop into a LINQ expression using query syntax (from/where/sel
 }
 ```
 
+## extract-iefe-no-captures
+
+(PREVIEW) Wrap a capture-free selection (statements or an expression) in an immediately-invoked static lambda. Would-be captures are instead passed in or returned.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "Path to a .sln or .csproj file"
+    },
+    "file": {
+      "type": "string",
+      "description": "Path to the file containing the selection"
+    },
+    "start-line": {
+      "type": "integer",
+      "description": "1-based start line of the selection"
+    },
+    "start-column": {
+      "type": "integer",
+      "description": "1-based start column of the selection"
+    },
+    "end-line": {
+      "type": "integer",
+      "description": "1-based end line of the selection"
+    },
+    "end-column": {
+      "type": "integer",
+      "description": "1-based end column of the selection"
+    }
+  },
+  "required": [
+    "project",
+    "file",
+    "start-line",
+    "start-column",
+    "end-line",
+    "end-column"
+  ]
+}
+```
+
 ## extract-interface
 
 Extract the public members of a class/struct/interface into a new interface, in a new file
