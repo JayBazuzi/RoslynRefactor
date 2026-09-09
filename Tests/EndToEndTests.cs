@@ -266,6 +266,23 @@ public class EndToEndTests
     }
 
     [Fact]
+    public async Task ExtractIefeNoCaptures_wraps_selected_statements_in_a_static_lambda()
+    {
+        var sample = ProcessTestHost.CreateSampleCopy();
+        var iefeSampleFilePath = Path.Combine(Path.GetDirectoryName(sample.ProgramFilePath)!, "IefeSample.cs");
+
+        var result = await ProcessTestHost.RunAsync(
+            "extract-iefe-no-captures",
+            "--project", sample.SolutionPath,
+            "--file", iefeSampleFilePath,
+            "--start-line", "14", "--start-column", "9",
+            "--end-line", "18", "--end-column", "10");
+
+        var content = await File.ReadAllTextAsync(iefeSampleFilePath);
+        Approvals.Verify(content);
+    }
+
+    [Fact]
     public async Task ConvertToLinqQueryForm_converts_the_foreach_loop()
     {
         var sample = ProcessTestHost.CreateSampleCopy();

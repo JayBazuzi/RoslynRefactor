@@ -23,6 +23,7 @@ sealed class RoslynRefactorRootCommand : RootCommand
         ConvertToLinqCallFormCommand.Descriptor,
         ConvertToLinqQueryFormCommand.Descriptor,
         MakeMethodStaticCommand.Descriptor,
+        ExtractIefeNoCapturesCommand.Descriptor,
     ];
 
     public static readonly Dictionary<string, Command> RefactorSubCommands =

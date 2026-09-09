@@ -13,11 +13,7 @@ public class MakeMethodStaticTests
 {
     static readonly string FixturesDir = Path.Combine(ProcessTestHost.FixturesSourceDir, "MakeMethodStatic");
 
-    public static IEnumerable<object[]> Scenarios() =>
-        Directory.GetFiles(FixturesDir, "*.input.cs")
-            .Select(path => Path.GetFileName(path)[..^".input.cs".Length])
-            .OrderBy(name => name, StringComparer.Ordinal)
-            .Select(name => new object[] { name });
+    public static IEnumerable<object[]> Scenarios() => ProcessTestHost.Scenarios(FixturesDir);
 
     [Theory]
     [MemberData(nameof(Scenarios))]

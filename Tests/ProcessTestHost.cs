@@ -108,6 +108,14 @@ static class ProcessTestHost
         return psi;
     }
 
+    // Enumerates the scenario names for a data-driven fixture directory: every {name}.input.cs in
+    // fixturesDir, in a stable order, as [MemberData]-shaped object[] rows.
+    public static IEnumerable<object[]> Scenarios(string fixturesDir) =>
+        Directory.GetFiles(fixturesDir, "*.input.cs")
+            .Select(path => Path.GetFileName(path)[..^".input.cs".Length])
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .Select(name => new object[] { name });
+
     static string FindFixturesSourceDir()
     {
         // AppContext.BaseDirectory is .../Tests/bin/<Config>/<TFM>/; walk up to the Tests dir.
