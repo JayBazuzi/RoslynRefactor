@@ -282,18 +282,18 @@ sealed class ExtractIefeNoCapturesCommand : ICommand
                     case IdentifierNameSyntax identifier
                         when !(identifier.Parent is MemberAccessExpressionSyntax memberAccess && memberAccess.Name == identifier)
                         && identifier.Parent is not MemberBindingExpressionSyntax:
-                    {
-                        var symbol = semanticModel.GetSymbolInfo(identifier).Symbol;
-                        if (symbol is not null && IsInstanceMember(symbol))
                         {
-                            EnsureReceiver(node);
+                            var symbol = semanticModel.GetSymbolInfo(identifier).Symbol;
+                            if (symbol is not null && IsInstanceMember(symbol))
+                            {
+                                EnsureReceiver(node);
+                            }
+                            else if (symbol is ILocalSymbol or IParameterSymbol && readOutside.Contains(symbol) && seen.Add(symbol))
+                            {
+                                parameters.Add(new CaptureParameter(symbol.Name, GetSymbolType(symbol), IsReceiver: false));
+                            }
+                            break;
                         }
-                        else if (symbol is ILocalSymbol or IParameterSymbol && readOutside.Contains(symbol) && seen.Add(symbol))
-                        {
-                            parameters.Add(new CaptureParameter(symbol.Name, GetSymbolType(symbol), IsReceiver: false));
-                        }
-                        break;
-                    }
                 }
             }
         }
