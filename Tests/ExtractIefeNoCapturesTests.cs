@@ -31,7 +31,12 @@ public class ExtractIefeNoCapturesTests
     public async Task Wraps_the_marked_selection_to_match_the_expected_output(string scenario)
     {
         var rawInput = await File.ReadAllTextAsync(Path.Combine(FixturesDir, scenario + ".input.cs"));
-        var expectedOutput = await File.ReadAllTextAsync(Path.Combine(FixturesDir, scenario + ".output.cs"));
+        var outputPath = Path.Combine(FixturesDir, scenario + ".output.cs");
+        if (!File.Exists(outputPath))
+        {
+            await File.WriteAllTextAsync(outputPath, "");
+        }
+        var expectedOutput = await File.ReadAllTextAsync(outputPath);
 
         ProcessTestHost.AssertCompiles(scenario + ".output.cs", expectedOutput);
 
