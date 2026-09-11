@@ -396,7 +396,7 @@ sealed class ExtractIefeNoCapturesCommand : ICommand
         var isVoid = type.SpecialType == SpecialType.System_Void;
         var returnTypeSyntax = isVoid ? null : (TypeSyntax)generator.TypeExpression(type);
 
-        var rewrittenExpression = RewriteCaptures(semanticModel, captures, expression.WithoutTrivia());
+        var rewrittenExpression = RewriteCaptures(semanticModel, captures, expression).WithoutTrivia();
 
         var invocation = BuildInvocation(generator, captures.Parameters, returnTypeSyntax, rewrittenExpression)
             .WithTriviaFrom(expression)
