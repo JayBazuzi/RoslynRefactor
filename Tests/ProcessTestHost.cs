@@ -17,13 +17,15 @@ static class ProcessTestHost
 
     public static readonly string FixturesSourceDir = FindFixturesSourceDir();
 
-    public static SampleCopy CreateSampleCopy()
+    // solutionFileName selects which solution file in Fixtures/ describes the copied Sample
+    // project - Sample.sln or the equivalent Sample.slnx - so tests can exercise both formats.
+    public static SampleCopy CreateSampleCopy(string solutionFileName = "Sample.sln")
     {
         var dest = Path.Combine(Path.GetTempPath(), "RoslynRefactorTests_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dest);
-        File.Copy(Path.Combine(FixturesSourceDir, "Sample.sln"), Path.Combine(dest, "Sample.sln"));
+        File.Copy(Path.Combine(FixturesSourceDir, solutionFileName), Path.Combine(dest, solutionFileName));
         CopyDirectory(Path.Combine(FixturesSourceDir, "Sample"), Path.Combine(dest, "Sample"));
-        return new SampleCopy(Path.Combine(dest, "Sample.sln"), Path.Combine(dest, "Sample", "Program.cs"));
+        return new SampleCopy(Path.Combine(dest, solutionFileName), Path.Combine(dest, "Sample", "Program.cs"));
     }
 
     // Creates a scratch, single-file project (no .sln needed - WorkspaceLoader opens a .csproj

@@ -7,7 +7,7 @@ Usage:
   RoslynRefactor extract-iefe-no-captures [options]
 
 Options:
-  --project <project> (REQUIRED)            Path to a .sln or .csproj file
+  --project <project> (REQUIRED)            Path to a .sln, .slnx or .csproj file
   --file <file> (REQUIRED)                  Path to the file containing the selection
   --start-line <start-line> (REQUIRED)      1-based start line of the selection
   --start-column <start-column> (REQUIRED)  1-based start column of the selection

@@ -7,7 +7,7 @@ Usage:
   RoslynRefactor extract-interface [options]
 
 Options:
-  --project <project> (REQUIRED)  Path to a .sln or .csproj file
+  --project <project> (REQUIRED)  Path to a .sln, .slnx or .csproj file
   --file <file> (REQUIRED)        Path to the file containing the type
   --line <line> (REQUIRED)        1-based line of the type
   --column <column> (REQUIRED)    1-based column of the type

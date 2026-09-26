@@ -8,7 +8,7 @@ Convert a foreach loop into a LINQ expression using fluent method calls (Where/S
   "properties": {
     "project": {
       "type": "string",
-      "description": "Path to a .sln or .csproj file"
+      "description": "Path to a .sln, .slnx or .csproj file"
     },
     "file": {
       "type": "string",
@@ -52,7 +52,7 @@ Convert a foreach loop into a LINQ expression using query syntax (from/where/sel
   "properties": {
     "project": {
       "type": "string",
-      "description": "Path to a .sln or .csproj file"
+      "description": "Path to a .sln, .slnx or .csproj file"
     },
     "file": {
       "type": "string",
@@ -96,7 +96,7 @@ Convert a foreach loop into a LINQ expression using query syntax (from/where/sel
   "properties": {
     "project": {
       "type": "string",
-      "description": "Path to a .sln or .csproj file"
+      "description": "Path to a .sln, .slnx or .csproj file"
     },
     "file": {
       "type": "string",
@@ -140,7 +140,7 @@ Extract the public members of a class/struct/interface into a new interface, in 
   "properties": {
     "project": {
       "type": "string",
-      "description": "Path to a .sln or .csproj file"
+      "description": "Path to a .sln, .slnx or .csproj file"
     },
     "file": {
       "type": "string",
@@ -178,7 +178,7 @@ Extract selected statements into a new method
   "properties": {
     "project": {
       "type": "string",
-      "description": "Path to a .sln or .csproj file"
+      "description": "Path to a .sln, .slnx or .csproj file"
     },
     "file": {
       "type": "string",
@@ -222,7 +222,7 @@ Inline a called method's (or local function's) body at the call site
   "properties": {
     "project": {
       "type": "string",
-      "description": "Path to a .sln or .csproj file"
+      "description": "Path to a .sln, .slnx or .csproj file"
     },
     "file": {
       "type": "string",
@@ -266,7 +266,7 @@ Inline a local variable's initializer into all usages, then remove the declarati
   "properties": {
     "project": {
       "type": "string",
-      "description": "Path to a .sln or .csproj file"
+      "description": "Path to a .sln, .slnx or .csproj file"
     },
     "file": {
       "type": "string",
@@ -310,7 +310,7 @@ Introduce a local variable for a selected expression
   "properties": {
     "project": {
       "type": "string",
-      "description": "Path to a .sln or .csproj file"
+      "description": "Path to a .sln, .slnx or .csproj file"
     },
     "file": {
       "type": "string",
@@ -354,7 +354,7 @@ Convert an instance method into a static method by adding a parameter for its re
   "properties": {
     "project": {
       "type": "string",
-      "description": "Path to a .sln or .csproj file"
+      "description": "Path to a .sln, .slnx or .csproj file"
     },
     "file": {
       "type": "string",
@@ -392,7 +392,7 @@ Move a static member (method/property/field/event) to another type in the same p
   "properties": {
     "project": {
       "type": "string",
-      "description": "Path to a .sln or .csproj file"
+      "description": "Path to a .sln, .slnx or .csproj file"
     },
     "file": {
       "type": "string",
@@ -431,7 +431,7 @@ Rename a symbol across a solution/project
   "properties": {
     "project": {
       "type": "string",
-      "description": "Path to a .sln or .csproj file"
+      "description": "Path to a .sln, .slnx or .csproj file"
     },
     "file": {
       "type": "string",
@@ -470,7 +470,7 @@ Reorder a method/property/indexer/delegate's parameters and update all call site
   "properties": {
     "project": {
       "type": "string",
-      "description": "Path to a .sln or .csproj file"
+      "description": "Path to a .sln, .slnx or .csproj file"
     },
     "file": {
       "type": "string",

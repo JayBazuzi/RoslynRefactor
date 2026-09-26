@@ -7,7 +7,7 @@ Usage:
   RoslynRefactor make-method-static [options]
 
 Options:
-  --project <project> (REQUIRED)     Path to a .sln or .csproj file
+  --project <project> (REQUIRED)     Path to a .sln, .slnx or .csproj file
   --file <file> (REQUIRED)           Path to the file containing the method
   --line <line> (REQUIRED)           1-based line of the method
   --column <column> (REQUIRED)       1-based column of the method

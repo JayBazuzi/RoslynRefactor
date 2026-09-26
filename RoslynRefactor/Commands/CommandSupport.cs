@@ -11,7 +11,7 @@ namespace RoslynRefactor;
 static class CommandSupport
 {
     public static readonly CommandParameter ProjectParameter =
-        new("project", "Path to a .sln or .csproj file");
+        new("project", "Path to a .sln, .slnx or .csproj file");
 
     public static CommandParameter FileParameter(string description) =>
         new("file", description);

@@ -88,6 +88,25 @@ public class EndToEndTests
         Approvals.Verify(content);
     }
 
+    // https://github.com/JayBazuzi/RoslynRefactor/issues/13 - .slnx is the XML solution format, and
+    // is what this repo itself uses. Asserting on file contents rather than approving them: the
+    // point is that the solution loads at all, not what rename produces (covered above).
+    [Fact]
+    public async Task Rename_accepts_a_slnx_solution()
+    {
+        var sample = ProcessTestHost.CreateSampleCopy("Sample.slnx");
+
+        var result = await ProcessTestHost.RunAsync(
+            "rename",
+            "--project", sample.SolutionPath,
+            "--file", sample.ProgramFilePath,
+            "--line", "16", "--column", "13",
+            "--to", "newName");
+
+        var content = await File.ReadAllTextAsync(sample.ProgramFilePath);
+        Assert.Contains("int newName = 42;", content);
+    }
+
     [Fact]
     public async Task Rename_fails_when_the_new_name_collides_with_an_existing_symbol_in_scope()
     {
