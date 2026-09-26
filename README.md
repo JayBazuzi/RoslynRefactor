@@ -3,7 +3,11 @@
 [![Build and Test](https://github.com/JayBazuzi/RoslynRefactor/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/JayBazuzi/RoslynRefactor/actions/workflows/build-and-test.yml)
 [![NuGet](https://img.shields.io/nuget/v/RoslynRefactor.svg)](https://www.nuget.org/packages/RoslynRefactor)
 
-A command-line tool for running Roslyn-powered refactorings against a C# solution from scripts or an AI agent. Supported refactorings:
+> Command-line and MCP access to the Roslyn-powered refactorings built in to Visual Studio.
+
+## Supported Refactorings
+
+Please tell me if there's another VS refactoring that you really want.
 
 <!-- include: Tests/_approvals/RoslynRefactorRootCommandTests.ApproveIndexOfAvailableCommands.approved.md -->
 | Command | Description |
